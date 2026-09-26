@@ -971,3 +971,597 @@ msgctxt "#30029"
 msgid "Flush to disk, drop kernel caches, purge Kodi caches"
 msgstr "Flush to disk, drop kernel caches, purge Kodi caches"
 
+# 31000 - 31200: R10/F10 Firmware Advanced Settings
+msgctxt "#31000"
+msgid "R10/F10 Firmware Advanced Settings"
+msgstr "R10/F10 Firmware Advanced Settings"
+
+msgctxt "#31001"
+msgid "Advanced tuning for Amlogic SoC, ALSA audio, Mali GPU pipeline and Blu-ray cache"
+msgstr "Advanced tuning for Amlogic SoC, ALSA audio, Mali GPU pipeline and Blu-ray cache"
+
+msgctxt "#31002"
+msgid "Audio Engine & ALSA Sink"
+msgstr "Audio Engine & ALSA Sink"
+
+msgctxt "#31003"
+msgid "Video Player & Hardware Codec"
+msgstr "Video Player & Hardware Codec"
+
+msgctxt "#31004"
+msgid "GUI Rendering & Mali EGL Pipeline"
+msgstr "GUI Rendering & Mali EGL Pipeline"
+
+msgctxt "#31005"
+msgid "Video Library Management"
+msgstr "Video Library Management"
+
+msgctxt "#31006"
+msgid "LAN Protocols & NFS"
+msgstr "LAN Protocols & NFS"
+
+msgctxt "#31007"
+msgid "Remote Database Connect Timeout"
+msgstr "Remote Database Connect Timeout"
+
+msgctxt "#31008"
+msgid "Blu-ray ISO Block Cache"
+msgstr "Blu-ray ISO Block Cache"
+
+msgctxt "#31009"
+msgid "View Status Report"
+msgstr "View Status Report"
+
+msgctxt "#31010"
+msgid "Restore Configurations from Backup (.bak)"
+msgstr "Restore Configurations from Backup (.bak)"
+
+msgctxt "#31011"
+msgid "Modify Value"
+msgstr "Modify Value"
+
+msgctxt "#31012"
+msgid "Reset to Recommended Default"
+msgstr "Reset to Recommended Default"
+
+msgctxt "#31013"
+msgid "Saved: %s = %s"
+msgstr "Saved: %s = %s"
+
+msgctxt "#31014"
+msgid "Advanced settings have been modified. Kodi restart is required to take effect. Reboot now?"
+msgstr "Advanced settings have been modified. Kodi restart is required to take effect. Reboot now?"
+
+msgctxt "#31015"
+msgid "Enter new value (range: %s - %s %s):"
+msgstr "Enter new value (range: %s - %s %s):"
+
+msgctxt "#31016"
+msgid "Invalid input or value out of range [%s - %s]!"
+msgstr "Invalid input or value out of range [%s - %s]!"
+
+msgctxt "#31017"
+msgid "Current Value: %s | Recommended: %s"
+msgstr "Current Value: %s | Recommended: %s"
+
+msgctxt "#31018"
+msgid "Not set (System Default)"
+msgstr "Not set (System Default)"
+
+msgctxt "#31019"
+msgid "Enabled"
+msgstr "Enabled"
+
+msgctxt "#31020"
+msgid "Disabled"
+msgstr "Disabled"
+
+msgctxt "#31021"
+msgid "No backup file found to restore."
+msgstr "No backup file found to restore."
+
+msgctxt "#31022"
+msgid "Backup restored successfully! Kodi restart is required. Reboot now?"
+msgstr "Backup restored successfully! Kodi restart is required. Reboot now?"
+
+msgctxt "#31023"
+msgid "Reset this setting to default value: %s?"
+msgstr "Reset this setting to default value: %s?"
+
+msgctxt "#31024"
+msgid "Are you sure you want to restore all advanced settings from .bak?"
+msgstr "Are you sure you want to restore all advanced settings from .bak?"
+
+msgctxt "#31030"
+msgid "PCM Max Sink Bits"
+msgstr "PCM Max Sink Bits"
+
+msgctxt "#31031"
+msgid "Limit PCM bit depth to fix DAC handshake pop/noise"
+msgstr "Limit PCM bit depth to fix DAC handshake pop/noise"
+
+msgctxt "#31032"
+msgid "PCM Max Sink Bits limit (0=unrestricted auto-negotiation, typical: 16, 24, 32). For PCM output, if external DAC/receiver fails at 32-bit handshake or produces popping noise, limit to 16 or 24."
+msgstr "PCM Max Sink Bits limit (0=unrestricted auto-negotiation, typical: 16, 24, 32). For PCM output, if external DAC/receiver fails at 32-bit handshake or produces popping noise, limit to 16 or 24."
+
+msgctxt "#31033"
+msgid "Audio Sink Settle Hold Time"
+msgstr "Audio Sink Settle Hold Time"
+
+msgctxt "#31034"
+msgid "Mute on audio format switch to eliminate clock lock pops"
+msgstr "Mute on audio format switch to eliminate clock lock pops"
+
+msgctxt "#31035"
+msgid "Audio sink settle hold mute time in milliseconds (0-2000 ms, default: 0). Mutes audio output when switching format/sample rate to eliminate AVR clock-locking pops."
+msgstr "Audio sink settle hold mute time in milliseconds (0-2000 ms, default: 0). Mutes audio output when switching format/sample rate to eliminate AVR clock-locking pops."
+
+msgctxt "#31040"
+msgid "Menu Domain Queue Time Size"
+msgstr "Menu Domain Queue Time Size"
+
+msgctxt "#31041"
+msgid "Increase menu buffer to avoid disc navigation stutter"
+msgstr "Increase menu buffer to avoid disc navigation stutter"
+
+msgctxt "#31042"
+msgid "Blu-ray/DVD interactive menu domain buffer queue duration in seconds (0.0-16.0, default: 1.0). Avoids stutter and loading delays during disc navigation."
+msgstr "Blu-ray/DVD interactive menu domain buffer queue duration in seconds (0.0-16.0, default: 1.0). Avoids stutter and loading delays during disc navigation."
+
+msgctxt "#31043"
+msgid "Seamless Branching Boundary Drain"
+msgstr "Seamless Branching Boundary Drain"
+
+msgctxt "#31044"
+msgid "Drain decoder buffer on slice jump to avoid desync/artifacts"
+msgstr "Drain decoder buffer on slice jump to avoid desync/artifacts"
+
+msgctxt "#31045"
+msgid "Seamless branching boundary buffer drain (default: true). Flushes decoder buffer on slice transitions to prevent AV sync loss or macroblocking across m2ts boundaries."
+msgstr "Seamless branching boundary buffer drain (default: true). Flushes decoder buffer on slice transitions to prevent AV sync loss or macroblocking across m2ts boundaries."
+
+msgctxt "#31046"
+msgid "Async Subtitle Parsing"
+msgstr "Async Subtitle Parsing"
+
+msgctxt "#31047"
+msgid "Parse ASS/PGS subtitles in worker thread to prevent frame drops"
+msgstr "Parse ASS/PGS subtitles in worker thread to prevent frame drops"
+
+msgctxt "#31048"
+msgid "Asynchronous subtitle parsing (default: true). Offloads complex ASS/SSA and PGS subtitles to worker threads, eliminating frame stutter when loading subtitles."
+msgstr "Asynchronous subtitle parsing (default: true). Offloads complex ASS/SSA and PGS subtitles to worker threads, eliminating frame stutter when loading subtitles."
+
+msgctxt "#31049"
+msgid "Async Fullscreen OSD Mode"
+msgstr "Async Fullscreen OSD Mode"
+
+msgctxt "#31050"
+msgid "Decouple OSD rendering from video playback for smooth UI"
+msgstr "Decouple OSD rendering from video playback for smooth UI"
+
+msgctxt "#31051"
+msgid "Async fullscreen OSD mode (0=disable, 1=force enable, 2=auto/active video only, default: 2). Decouples progress bars/info panels from video render thread for smooth animations."
+msgstr "Async fullscreen OSD mode (0=disable, 1=force enable, 2=auto/active video only, default: 2). Decouples progress bars/info panels from video render thread for smooth animations."
+
+msgctxt "#31052"
+msgid "Async Video Layer Render"
+msgstr "Async Video Layer Render"
+
+msgctxt "#31053"
+msgid "Async video layer rendering (disable if complex subtitles flicker)"
+msgstr "Async video layer rendering (disable if complex subtitles flicker)"
+
+msgctxt "#31054"
+msgid "Async video layer rendering (default: true). If stylized subtitles flicker on certain firmware versions, set to false to resolve."
+msgstr "Async video layer rendering (default: true). If stylized subtitles flicker on certain firmware versions, set to false to resolve."
+
+msgctxt "#31055"
+msgid "Min Seek Distance Before EOF"
+msgstr "Min Seek Distance Before EOF"
+
+msgctxt "#31056"
+msgid "Prevent accidental playback exit when seeking near end of file"
+msgstr "Prevent accidental playback exit when seeking near end of file"
+
+msgctxt "#31057"
+msgid "Minimum seek distance before EOF in seconds (0-600, default: 10). Prevents jumping too close to EOF from prematurely terminating playback or jumping to next episode."
+msgstr "Minimum seek distance before EOF in seconds (0-600, default: 10). Prevents jumping too close to EOF from prematurely terminating playback or jumping to next episode."
+
+msgctxt "#31058"
+msgid "Force Dolby Vision VSVDB V1 Block"
+msgstr "Force Dolby Vision VSVDB V1 Block"
+
+msgctxt "#31059"
+msgid "Only for legacy displays that only support Dolby Vision V1 VSVDB"
+msgstr "Only for legacy displays that only support Dolby Vision V1 VSVDB"
+
+msgctxt "#31060"
+msgid "Force Dolby Vision VSVDB V1 block (default: false). Kodi defaults to standard V2 format. Enable only when connecting to legacy DV displays supporting V1 only."
+msgstr "Force Dolby Vision VSVDB V1 block (default: false). Kodi defaults to standard V2 format. Enable only when connecting to legacy DV displays supporting V1 only."
+
+msgctxt "#31061"
+msgid "Deinterlace Delay Compensation"
+msgstr "Deinterlace Delay Compensation"
+
+msgctxt "#31062"
+msgid "Compensate for hardware deinterlace latency on 50i/60i streams"
+msgstr "Compensate for hardware deinterlace latency on 50i/60i streams"
+
+msgctxt "#31063"
+msgid "Interlaced hardware deinterlacing delay compensation (default: false). Offsets 1-2 field clock delays introduced by hardware deinterlacer for perfect lip-sync."
+msgstr "Interlaced hardware deinterlacing delay compensation (default: false). Offsets 1-2 field clock delays introduced by hardware deinterlacer for perfect lip-sync."
+
+msgctxt "#31064"
+msgid "Video Rate Field Hold"
+msgstr "Video Rate Field Hold"
+
+msgctxt "#31065"
+msgid "Prevent frequent refresh rate shifts on mixed cadence streams"
+msgstr "Prevent frequent refresh rate shifts on mixed cadence streams"
+
+msgctxt "#31066"
+msgid "Video rate field hold (default: true). Suppresses rapid HDMI refresh rate switching on interlaced/progressive hybrid content to prevent black screen flashing."
+msgstr "Video rate field hold (default: true). Suppresses rapid HDMI refresh rate switching on interlaced/progressive hybrid content to prevent black screen flashing."
+
+msgctxt "#31067"
+msgid "VC-1 Decoder Driver Injection"
+msgstr "VC-1 Decoder Driver Injection"
+
+msgctxt "#31068"
+msgid "Inject interlace mode into driver to fix VC-1 stutter and green screen"
+msgstr "Inject interlace mode into driver to fix VC-1 stutter and green screen"
+
+msgctxt "#31069"
+msgid "VC-1 Amlogic hardware decoder optimization (default: true). Injects mode into /sys/module/amvdec_vc1/parameters/force_frame_int to eliminate VC-1 playback stutter and green screens."
+msgstr "VC-1 Amlogic hardware decoder optimization (default: true). Injects mode into /sys/module/amvdec_vc1/parameters/force_frame_int to eliminate VC-1 playback stutter and green screens."
+
+msgctxt "#31070"
+msgid "VC-1 Drop Corrupt Frames"
+msgstr "VC-1 Drop Corrupt Frames"
+
+msgctxt "#31071"
+msgid "Drop corrupt frames to prevent hardware decoder deadlock"
+msgstr "Drop corrupt frames to prevent hardware decoder deadlock"
+
+msgctxt "#31072"
+msgid "VC-1 corrupt frame drop mechanism (default: true). Drops broken or misaligned VC-1 frames to prevent hardware decoder deadlocks."
+msgstr "VC-1 corrupt frame drop mechanism (default: true). Drops broken or misaligned VC-1 frames to prevent hardware decoder deadlocks."
+
+msgctxt "#31073"
+msgid "VC-1 Timestamp Auto-Repair"
+msgstr "VC-1 Timestamp Auto-Repair"
+
+msgctxt "#31074"
+msgid "Recalibrate jittered timestamps for smooth 23.976fps playback"
+msgstr "Recalibrate jittered timestamps for smooth 23.976fps playback"
+
+msgctxt "#31075"
+msgid "VC-1 timestamp auto-repair (default: true). Recalibrates jittered PTS/DTS timestamps to maintain smooth 23.976fps playback."
+msgstr "VC-1 timestamp auto-repair (default: true). Recalibrates jittered PTS/DTS timestamps to maintain smooth 23.976fps playback."
+
+msgctxt "#31080"
+msgid "EGL Buffer Age Partial Redraw"
+msgstr "EGL Buffer Age Partial Redraw"
+
+msgctxt "#31081"
+msgid "Enable dirty region redraws to cut Mali GPU load and thermals"
+msgstr "Enable dirty region redraws to cut Mali GPU load and thermals"
+
+msgctxt "#31082"
+msgid "EGL Buffer Age partial redraw (0=disable, 1=enable, default: 1). Significantly reduces Mali GPU load and heat, improving UI responsiveness."
+msgstr "EGL Buffer Age partial redraw (0=disable, 1=enable, default: 1). Significantly reduces Mali GPU load and heat, improving UI responsiveness."
+
+msgctxt "#31083"
+msgid "Update Buffer Age After Render Scope"
+msgstr "Update Buffer Age After Render Scope"
+
+msgctxt "#31084"
+msgid "Update Buffer Age tracking after render scope ends (default: true)"
+msgstr "Update Buffer Age tracking after render scope ends (default: true)"
+
+msgctxt "#31085"
+msgid "Update Buffer Age tracking after render scope (default: true). Accurately maintains dirty regions across swap buffers."
+msgstr "Update Buffer Age tracking after render scope (default: true). Accurately maintains dirty regions across swap buffers."
+
+msgctxt "#31086"
+msgid "Max Dirty Regions Count"
+msgstr "Max Dirty Regions Count"
+
+msgctxt "#31087"
+msgid "Limit tracked dirty rectangles (0-64, default: 4)"
+msgstr "Limit tracked dirty rectangles (0-64, default: 4)"
+
+msgctxt "#31088"
+msgid "Maximum discrete dirty regions (0-64, default: 4). Merges into a single bounding box when exceeded to balance CPU calculation and GPU draw cost."
+msgstr "Maximum discrete dirty regions (0-64, default: 4). Merges into a single bounding box when exceeded to balance CPU calculation and GPU draw cost."
+
+msgctxt "#31089"
+msgid "Skip Sleep Active Window"
+msgstr "Skip Sleep Active Window"
+
+msgctxt "#31090"
+msgid "Keep maximum frame rate right after input for fluid response"
+msgstr "Keep maximum frame rate right after input for fluid response"
+
+msgctxt "#31091"
+msgid "Skip sleep active window after user interaction in milliseconds (0-2000 ms, default: 250). Guarantees instantaneous fluid response upon keypress or scroll."
+msgstr "Skip sleep active window after user interaction in milliseconds (0-2000 ms, default: 250). Guarantees instantaneous fluid response upon keypress or scroll."
+
+msgctxt "#31092"
+msgid "Menu Idle Framerate Cap"
+msgstr "Menu Idle Framerate Cap"
+
+msgctxt "#31093"
+msgid "Cap UI FPS during idle (0=unlimited, default: 0)"
+msgstr "Cap UI FPS during idle (0=unlimited, default: 0)"
+
+msgctxt "#31094"
+msgid "Menu idle framerate cap in FPS (0=unlimited, range: 0-60, default: 0). Cap to 20 or 30 FPS to reduce power and temperature while sitting idle."
+msgstr "Menu idle framerate cap in FPS (0=unlimited, range: 0-60, default: 0). Cap to 20 or 30 FPS to reduce power and temperature while sitting idle."
+
+msgctxt "#31095"
+msgid "Skin HDR FBO Rendering"
+msgstr "Skin HDR FBO Rendering"
+
+msgctxt "#31096"
+msgid "Experimental: render skin in wide color gamut HDR FBO"
+msgstr "Experimental: render skin in wide color gamut HDR FBO"
+
+msgctxt "#31097"
+msgid "Skin HDR frame buffer rendering (0=disable, 1=enable, default: 0). Experimental: renders Kodi skin directly in HDR FBO with wide color gamut."
+msgstr "Skin HDR frame buffer rendering (0=disable, 1=enable, default: 0). Experimental: renders Kodi skin directly in HDR FBO with wide color gamut."
+
+msgctxt "#31098"
+msgid "OSD Guest Composite Mode"
+msgstr "OSD Guest Composite Mode"
+
+msgctxt "#31099"
+msgid "Custom composite mode (0=default, 1=enable, default: 0)"
+msgstr "Custom composite mode (0=default, 1=enable, default: 0)"
+
+msgctxt "#31100"
+msgid "OSD guest composite mode (0=default, 1=enable, default: 0)."
+msgstr "OSD guest composite mode (0=default, 1=enable, default: 0)."
+
+msgctxt "#31101"
+msgid "OSD Dirty Region Trace"
+msgstr "OSD Dirty Region Trace"
+
+msgctxt "#31102"
+msgid "Dirty region debug trace (0=disable, 1=enable, default: 0)"
+msgstr "Dirty region debug trace (0=disable, 1=enable, default: 0)"
+
+msgctxt "#31103"
+msgid "OSD dirty region debug trace (0=disable, 1=enable, default: 0). Used for visualizing partial redraw bounds."
+msgstr "OSD dirty region debug trace (0=disable, 1=enable, default: 0). Used for visualizing partial redraw bounds."
+
+msgctxt "#31104"
+msgid "GUI Texture Anisotropic Filtering"
+msgstr "GUI Texture Anisotropic Filtering"
+
+msgctxt "#31105"
+msgid "Improve sharpness of posters/text at oblique angles (default: 0)"
+msgstr "Improve sharpness of posters/text at oblique angles (default: 0)"
+
+msgctxt "#31106"
+msgid "GUI texture anisotropic filtering (values: 0, 2, 4, 8, 16, default: 0). Enhances poster and text clarity when viewed at oblique angles."
+msgstr "GUI texture anisotropic filtering (values: 0, 2, 4, 8, 16, default: 0). Enhances poster and text clarity when viewed at oblique angles."
+
+msgctxt "#31107"
+msgid "Front-to-Back Render Sorting"
+msgstr "Front-to-Back Render Sorting"
+
+msgctxt "#31108"
+msgid "Early depth testing to cut layer overdraw (default: false)"
+msgstr "Early depth testing to cut layer overdraw (default: false)"
+
+msgctxt "#31109"
+msgid "Front-to-Back render sorting (default: false). Utilizes early depth testing to reduce overdraw between opaque/transparent layers."
+msgstr "Front-to-Back render sorting (default: false). Utilizes early depth testing to reduce overdraw between opaque/transparent layers."
+
+msgctxt "#31110"
+msgid "Clear Geometry Before Swap"
+msgstr "Clear Geometry Before Swap"
+
+msgctxt "#31111"
+msgid "Clear geometry buffer prior to swap buffers (default: true)"
+msgstr "Clear geometry buffer prior to swap buffers (default: true)"
+
+msgctxt "#31112"
+msgid "Clear geometry buffer before buffer swap (default: true). Prevents stale vertices from polluting the next frame."
+msgstr "Clear geometry buffer before buffer swap (default: true). Prevents stale vertices from polluting the next frame."
+
+msgctxt "#31113"
+msgid "Wait VSync Before Swap"
+msgstr "Wait VSync Before Swap"
+
+msgctxt "#31114"
+msgid "Wait for VSync to prevent UI tearing and stabilize frame rate"
+msgstr "Wait for VSync to prevent UI tearing and stabilize frame rate"
+
+msgctxt "#31115"
+msgid "Wait for vertical synchronization before swapping buffers (default: true). Prevents UI tearing and locks to smooth refresh intervals."
+msgstr "Wait for vertical synchronization before swapping buffers (default: true). Prevents UI tearing and locks to smooth refresh intervals."
+
+msgctxt "#31116"
+msgid "Wait GPU Before Swap"
+msgstr "Wait GPU Before Swap"
+
+msgctxt "#31117"
+msgid "Wait GPU mode (0=never, 1=always, 2=fullscreen video, default: 2)"
+msgstr "Wait GPU mode (0=never, 1=always, 2=fullscreen video, default: 2)"
+
+msgctxt "#31118"
+msgid "Wait for GPU execution completion before swap (0=no, 1=always, 2=fullscreen video only, default: 2). Ensures video plane and OSD/subtitles refresh in lockstep."
+msgstr "Wait for GPU execution completion before swap (0=no, 1=always, 2=fullscreen video only, default: 2). Ensures video plane and OSD/subtitles refresh in lockstep."
+
+msgctxt "#31119"
+msgid "sRGB Color Corrected Compositing"
+msgstr "sRGB Color Corrected Compositing"
+
+msgctxt "#31120"
+msgid "Prevent SDR skin over HDR/DV video from oversaturating"
+msgstr "Prevent SDR skin over HDR/DV video from oversaturating"
+
+msgctxt "#31121"
+msgid "sRGB color-corrected compositing (default: true). Prevents SDR interface elements from appearing blown-out or oversaturated over HDR/Dolby Vision video."
+msgstr "sRGB color-corrected compositing (default: true). Prevents SDR interface elements from appearing blown-out or oversaturated over HDR/Dolby Vision video."
+
+msgctxt "#31122"
+msgid "Composite Dithering"
+msgstr "Composite Dithering"
+
+msgctxt "#31123"
+msgid "Eliminate color banding on dark gradients and translucent overlays"
+msgstr "Eliminate color banding on dark gradients and translucent overlays"
+
+msgctxt "#31124"
+msgid "UI composite dithering (default: true). Eliminates stair-stepped color banding on dark gradient backgrounds and translucent layers."
+msgstr "UI composite dithering (default: true). Eliminates stair-stepped color banding on dark gradient backgrounds and translucent layers."
+
+msgctxt "#31125"
+msgid "Async Texture Upload (PBO)"
+msgstr "Async Texture Upload (PBO)"
+
+msgctxt "#31126"
+msgid "Upload poster thumbnails in background using PBO"
+msgstr "Upload poster thumbnails in background using PBO"
+
+msgctxt "#31127"
+msgid "Async texture upload via PBO (default: true). Uploads poster textures asynchronously using Pixel Buffer Objects to prevent scrolling micro-stutters."
+msgstr "Async texture upload via PBO (default: true). Uploads poster textures asynchronously using Pixel Buffer Objects to prevent scrolling micro-stutters."
+
+msgctxt "#31128"
+msgid "Skin Texture Mipmapping"
+msgstr "Skin Texture Mipmapping"
+
+msgctxt "#31129"
+msgid "Generate mipmaps for UI skin textures (default: false)"
+msgstr "Generate mipmaps for UI skin textures (default: false)"
+
+msgctxt "#31130"
+msgid "Skin texture mipmapping (default: false). Improves visual antialiasing for downscaled icons at the expense of slight VRAM overhead."
+msgstr "Skin texture mipmapping (default: false). Improves visual antialiasing for downscaled icons at the expense of slight VRAM overhead."
+
+msgctxt "#31131"
+msgid "Mipmap Sharpen Bias"
+msgstr "Mipmap Sharpen Bias"
+
+msgctxt "#31132"
+msgid "LOD bias (0.0-3.0, default: 0.5) to sharpen small icons"
+msgstr "LOD bias (0.0-3.0, default: 0.5) to sharpen small icons"
+
+msgctxt "#31133"
+msgid "Mipmap sharpening bias (range: 0.0-3.0, default: 0.5). Applies negative LOD bias to enhance sharpness of small UI textures."
+msgstr "Mipmap sharpening bias (range: 0.0-3.0, default: 0.5). Applies negative LOD bias to enhance sharpness of small UI textures."
+
+msgctxt "#31134"
+msgid "Minified Only Mipmapping"
+msgstr "Minified Only Mipmapping"
+
+msgctxt "#31135"
+msgid "Conserve VRAM by only generating mipmaps for downscaled textures"
+msgstr "Conserve VRAM by only generating mipmaps for downscaled textures"
+
+msgctxt "#31136"
+msgid "Only generate mipmaps for downscaled textures (default: true). Conserves GPU memory while maintaining clarity."
+msgstr "Only generate mipmaps for downscaled textures (default: true). Conserves GPU memory while maintaining clarity."
+
+msgctxt "#31137"
+msgid "Case Sensitive Local Art Match"
+msgstr "Case Sensitive Local Art Match"
+
+msgctxt "#31138"
+msgid "Set false on SMB/NFS with mixed case art to prevent missing posters"
+msgstr "Set false on SMB/NFS with mixed case art to prevent missing posters"
+
+msgctxt "#31139"
+msgid "Case-sensitive local art matching (default: true). Set to false if SMB/NFS shares contain mixed-case filenames like Poster.JPG to avoid missing artwork."
+msgstr "Case-sensitive local art matching (default: true). Set to false if SMB/NFS shares contain mixed-case filenames like Poster.JPG to avoid missing artwork."
+
+msgctxt "#31140"
+msgid "NFS Connection Timeout"
+msgstr "NFS Connection Timeout"
+
+msgctxt "#31141"
+msgid "NFS connection timeout in seconds (0-3600, default: 0)"
+msgstr "NFS connection timeout in seconds (0-3600, default: 0)"
+
+msgctxt "#31142"
+msgid "NFS connection timeout in seconds (range: 0-3600, default: 0). Set to 0 to let OS kernel handle timeout."
+msgstr "NFS connection timeout in seconds (range: 0-3600, default: 0). Set to 0 to let OS kernel handle timeout."
+
+msgctxt "#31143"
+msgid "NFS Retries Count"
+msgstr "NFS Retries Count"
+
+msgctxt "#31144"
+msgid "NFS network retry count (-1 to 30, -1 is default)"
+msgstr "NFS network retry count (-1 to 30, -1 is default)"
+
+msgctxt "#31145"
+msgid "NFS retry count (range: -1 to 30, default: -1). Maximum connection retry attempts on NFS mount failures."
+msgstr "NFS retry count (range: -1 to 30, default: -1). Maximum connection retry attempts on NFS mount failures."
+
+msgctxt "#31146"
+msgid "Remote Database Connect Timeout"
+msgstr "Remote Database Connect Timeout"
+
+msgctxt "#31147"
+msgid "Cap MySQL timeout to 5s to prevent boot freeze on sleep NAS"
+msgstr "Cap MySQL timeout to 5s to prevent boot freeze on sleep NAS"
+
+msgctxt "#31148"
+msgid "Remote MySQL/MariaDB connect timeout protection (default: 5s). Prevents Kodi from hanging at splash screen when NAS is sleeping; synchronizes across Video, Music, TV, and EPG databases."
+msgstr "Remote MySQL/MariaDB connect timeout protection (default: 5s). Prevents Kodi from hanging at splash screen when NAS is sleeping; synchronizes across Video, Music, TV, and EPG databases."
+
+msgctxt "#31149"
+msgid "Blu-ray ISO Cache Page Size"
+msgstr "Blu-ray ISO Cache Page Size"
+
+msgctxt "#31150"
+msgid "Cache page size in bytes (default: 262144 = 256KB)"
+msgstr "Cache page size in bytes (default: 262144 = 256KB)"
+
+msgctxt "#31151"
+msgid "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC."
+msgstr "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC."
+
+msgctxt "#31152"
+msgid "Blu-ray ISO Max Memory Cache"
+msgstr "Blu-ray ISO Max Memory Cache"
+
+msgctxt "#31153"
+msgid "Maximum cache in bytes (default: 67108864 = 64MB)"
+msgstr "Maximum cache in bytes (default: 67108864 = 64MB)"
+
+msgctxt "#31154"
+msgid "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads."
+msgstr "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads."
+
+msgctxt "#31155"
+msgid "Blu-ray ISO Forward Prefetch Pages"
+msgstr "Blu-ray ISO Forward Prefetch Pages"
+
+msgctxt "#31156"
+msgid "Forward prefetch pages count (range: 0-16, default: 1)"
+msgstr "Forward prefetch pages count (range: 0-16, default: 1)"
+
+msgctxt "#31157"
+msgid "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1). Note: Introduced in R10; F10 and later internalized this into an automatic LRU mechanism."
+msgstr "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1). Note: Introduced in R10; F10 and later internalized this into an automatic LRU mechanism."
+
+msgctxt "#31158"
+msgid "R10/F10 Firmware Settings Overview"
+msgstr "R10/F10 Firmware Settings Overview"
+
+msgctxt "#31159"
+msgid "Currently set to recommended default"
+msgstr "Currently set to recommended default"
+
+msgctxt "#31160"
+msgid "Unconfigured"
+msgstr "Unconfigured"
+
+
