@@ -30,3 +30,47 @@ def test_firmware_settings_i18n_keys():
     for sid in required_ids:
         assert sid in zh_ids, f"ID {sid} missing in zh_cn"
         assert sid in en_ids, f"ID {sid} missing in en_gb"
+
+
+def test_schema_structure():
+    """Verify that CATEGORIES and SETTINGS_SCHEMA are complete and well-formed."""
+    from resources.lib.tools.firmware_settings import (
+        CATEGORIES,
+        SETTINGS_SCHEMA,
+        get_setting_by_id,
+        get_settings_by_category,
+    )
+
+    assert len(CATEGORIES) == 7
+    cat_ids = [c["id"] for c in CATEGORIES]
+    assert "audio" in cat_ids
+    assert "video" in cat_ids
+    assert "gui" in cat_ids
+    assert "videolibrary" in cat_ids
+    assert "network" in cat_ids
+    assert "database" in cat_ids
+    assert "blurayisocache" in cat_ids
+
+    # All settings have valid types and default values
+    valid_types = {"bool", "choice", "int", "float"}
+    assert len(SETTINGS_SCHEMA) >= 30
+
+    for item in SETTINGS_SCHEMA:
+        assert item["id"], f"Setting {item} missing id"
+        assert item["category"] in cat_ids, f"Setting {item['id']} category not in cat_ids"
+        assert item["type"] in valid_types, f"Setting {item['id']} has invalid type {item['type']}"
+        assert item["default"] is not None, f"Setting {item['id']} default is None"
+        assert "title_id" in item, f"Setting {item['id']} missing title_id"
+        assert "desc_id" in item, f"Setting {item['id']} missing desc_id"
+        assert "help_id" in item, f"Setting {item['id']} missing help_id"
+
+    # Test lookup functions
+    item = get_setting_by_id("subtitleasyncparse")
+    assert item is not None
+    assert item["section"] == "video"
+    assert item["type"] == "bool"
+    assert item["default"] == "true"
+
+    video_settings = get_settings_by_category("video")
+    assert len(video_settings) >= 12
+
