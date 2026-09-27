@@ -83,7 +83,7 @@ CATEGORIES: List[Dict[str, Any]] = [
     {
         "id": "blurayisocache",
         "title_id": 31008,
-        "desc": "Blu-ray ISO Block Cache",
+        "desc": "Blu-ray ISO Block Cache (R10: keep; F10: internalized as LRU)",
     },
 ]
 

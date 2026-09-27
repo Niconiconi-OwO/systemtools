@@ -1006,7 +1006,7 @@ msgstr "远程数据库连接超时保护"
 
 msgctxt "#31008"
 msgid "Blu-ray ISO Block Cache"
-msgstr "蓝光 ISO 块缓存"
+msgstr "蓝光 ISO 块缓存 (R10保留/F10内化为LRU)"
 
 msgctxt "#31009"
 msgid "View Status Report"
@@ -1522,11 +1522,11 @@ msgstr "蓝光 ISO 缓存页大小"
 
 msgctxt "#31150"
 msgid "Cache page size in bytes (default: 262144 = 256KB)"
-msgstr "缓存页大小 (单位: 字节, 默认: 262144 即 256KB)"
+msgstr "缓存页大小 (默认: 256KB。纯 R10 可保留；F10 已内化为 LRU)"
 
 msgctxt "#31151"
 msgid "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC."
-msgstr "蓝光 ISO 块缓存页大小 (单位: 字节, 默认: 262144 即 256KB)。优化晶晨芯片直接解包读取 ISO 原盘时的 I/O 吞吐。"
+msgstr "蓝光 ISO 块缓存页大小 (单位: 字节, 默认: 262144 即 256KB)。优化晶晨芯片直接解包读取 ISO 原盘时的 I/O 吞吐。\n\n【固件版本说明】此项由 R10 引入。如果你使用的是纯 R10 镜像，可保留此项；若是最新 F10，此项已内化为 LRU 机制。"
 
 msgctxt "#31152"
 msgid "Blu-ray ISO Max Memory Cache"
@@ -1534,11 +1534,11 @@ msgstr "蓝光 ISO 最大内存缓存"
 
 msgctxt "#31153"
 msgid "Maximum cache in bytes (default: 67108864 = 64MB)"
-msgstr "最大内存缓存 (单位: 字节, 默认: 67108864 即 64MB)"
+msgstr "最大内存缓存 (默认: 64MB。纯 R10 可保留；F10 已内化为 LRU)"
 
 msgctxt "#31154"
 msgid "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads."
-msgstr "蓝光 ISO 最大内存缓存限制 (单位: 字节, 默认: 67108864 即 64MB)。防止内存溢出同时提供充裕的原盘分段读取缓冲。"
+msgstr "蓝光 ISO 最大内存缓存限制 (单位: 字节, 默认: 67108864 即 64MB)。防止内存溢出同时提供充裕的原盘分段读取缓冲。\n\n【固件版本说明】此项由 R10 引入。如果你使用的是纯 R10 镜像，可保留此项；若是最新 F10，此项已内化为 LRU 机制。"
 
 msgctxt "#31155"
 msgid "Blu-ray ISO Forward Prefetch Pages"
@@ -1546,11 +1546,11 @@ msgstr "蓝光 ISO 顺序读取预读页数"
 
 msgctxt "#31156"
 msgid "Forward prefetch pages count (range: 0-16, default: 1)"
-msgstr "顺序读取预读页数 (范围: 0-16, 默认: 1)"
+msgstr "顺序读取预读页数 (默认: 1。纯 R10 可保留；F10 已内化为 LRU)"
 
 msgctxt "#31157"
 msgid "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1). Note: Introduced in R10; F10 and later internalized this into an automatic LRU mechanism."
-msgstr "蓝光 ISO 顺序读取预读页数 (范围: 0-16, 默认: 1)。注: R10 引入；后续 F10 已演进内化为 LRU 机制。"
+msgstr "蓝光 ISO 顺序读取预读页数 (范围: 0-16, 默认: 1)。\n\n【固件版本说明】此项由 R10 引入。如果你使用的是纯 R10 镜像，可保留此项；若是最新 F10，此项已内化为 LRU 机制。"
 
 msgctxt "#31158"
 msgid "R10/F10 Firmware Settings Overview"

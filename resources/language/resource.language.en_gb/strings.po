@@ -1006,7 +1006,7 @@ msgstr "Remote Database Connect Timeout"
 
 msgctxt "#31008"
 msgid "Blu-ray ISO Block Cache"
-msgstr "Blu-ray ISO Block Cache"
+msgstr "Blu-ray ISO Block Cache (R10: keep; F10: internalized as LRU)"
 
 msgctxt "#31009"
 msgid "View Status Report"
@@ -1522,11 +1522,11 @@ msgstr "Blu-ray ISO Cache Page Size"
 
 msgctxt "#31150"
 msgid "Cache page size in bytes (default: 262144 = 256KB)"
-msgstr "Cache page size in bytes (default: 262144 = 256KB)"
+msgstr "Cache page size (default: 256KB; keep for R10, internalized as LRU in F10)"
 
 msgctxt "#31151"
 msgid "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC."
-msgstr "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC."
+msgstr "Blu-ray ISO cache page size in bytes (default: 262144 = 256KB). Optimizes block I/O throughput when reading ISOs on Amlogic SoC.\n\n[Firmware Version Note] Introduced in R10. If using pure R10 firmware, keep this setting; for newer F10, this mechanism has been internalized as LRU."
 
 msgctxt "#31152"
 msgid "Blu-ray ISO Max Memory Cache"
@@ -1534,11 +1534,11 @@ msgstr "Blu-ray ISO Max Memory Cache"
 
 msgctxt "#31153"
 msgid "Maximum cache in bytes (default: 67108864 = 64MB)"
-msgstr "Maximum cache in bytes (default: 67108864 = 64MB)"
+msgstr "Maximum cache (default: 64MB; keep for R10, internalized as LRU in F10)"
 
 msgctxt "#31154"
 msgid "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads."
-msgstr "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads."
+msgstr "Blu-ray ISO max memory cache in bytes (default: 67108864 = 64MB). Prevents out-of-memory errors while buffering disc reads.\n\n[Firmware Version Note] Introduced in R10. If using pure R10 firmware, keep this setting; for newer F10, this mechanism has been internalized as LRU."
 
 msgctxt "#31155"
 msgid "Blu-ray ISO Forward Prefetch Pages"
@@ -1546,11 +1546,11 @@ msgstr "Blu-ray ISO Forward Prefetch Pages"
 
 msgctxt "#31156"
 msgid "Forward prefetch pages count (range: 0-16, default: 1)"
-msgstr "Forward prefetch pages count (range: 0-16, default: 1)"
+msgstr "Forward prefetch pages count (default: 1; keep for R10, internalized as LRU in F10)"
 
 msgctxt "#31157"
 msgid "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1). Note: Introduced in R10; F10 and later internalized this into an automatic LRU mechanism."
-msgstr "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1). Note: Introduced in R10; F10 and later internalized this into an automatic LRU mechanism."
+msgstr "Blu-ray ISO forward prefetch pages (range: 0-16, default: 1).\n\n[Firmware Version Note] Introduced in R10. If using pure R10 firmware, keep this setting; for newer F10, this mechanism has been internalized as LRU."
 
 msgctxt "#31158"
 msgid "R10/F10 Firmware Settings Overview"
