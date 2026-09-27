@@ -80,11 +80,6 @@ CATEGORIES: List[Dict[str, Any]] = [
         "title_id": 31007,
         "desc": "Remote Database Connect Timeout",
     },
-    {
-        "id": "blurayisocache",
-        "title_id": 31008,
-        "desc": "Blu-ray ISO Block Cache (R10: keep; F10: internalized as LRU)",
-    },
 ]
 
 SETTINGS_SCHEMA: List[Dict[str, Any]] = [
@@ -530,46 +525,6 @@ SETTINGS_SCHEMA: List[Dict[str, Any]] = [
         "help_id": 31148,
         "range": (1, 60),
         "unit": "s",
-    },
-
-    # 7. Blu-ray ISO Block Cache
-    {
-        "id": "pagesize",
-        "category": "blurayisocache",
-        "section": "blurayisocache",
-        "tag": "pagesize",
-        "type": "int",
-        "default": "262144",
-        "title_id": 31149,
-        "desc_id": 31150,
-        "help_id": 31151,
-        "range": (65536, 1048576),
-        "unit": "bytes",
-    },
-    {
-        "id": "maxbytes",
-        "category": "blurayisocache",
-        "section": "blurayisocache",
-        "tag": "maxbytes",
-        "type": "int",
-        "default": "67108864",
-        "title_id": 31152,
-        "desc_id": 31153,
-        "help_id": 31154,
-        "range": (16777216, 536870912),
-        "unit": "bytes",
-    },
-    {
-        "id": "forwardprefetchpages",
-        "category": "blurayisocache",
-        "section": "blurayisocache",
-        "tag": "forwardprefetchpages",
-        "type": "int",
-        "default": "1",
-        "title_id": 31155,
-        "desc_id": 31156,
-        "help_id": 31157,
-        "range": (0, 16),
     },
 ]
 

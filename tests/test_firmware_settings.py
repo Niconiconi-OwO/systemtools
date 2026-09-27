@@ -31,7 +31,7 @@ def test_firmware_settings_i18n_keys():
     # Core required IDs
     required_ids = [
         "31000", "31001", "31002", "31003", "31004", "31005", "31006",
-        "31007", "31008", "31009", "31010", "31011", "31012", "31013",
+        "31007", "31009", "31010", "31011", "31012", "31013",
         "31014", "31015",
     ]
     for sid in required_ids:
@@ -48,7 +48,7 @@ def test_schema_structure():
         get_settings_by_category,
     )
 
-    assert len(CATEGORIES) == 7
+    assert len(CATEGORIES) == 6
     cat_ids = [c["id"] for c in CATEGORIES]
     assert "audio" in cat_ids
     assert "video" in cat_ids
@@ -56,7 +56,7 @@ def test_schema_structure():
     assert "videolibrary" in cat_ids
     assert "network" in cat_ids
     assert "database" in cat_ids
-    assert "blurayisocache" in cat_ids
+    assert "blurayisocache" not in cat_ids
 
     # All settings have valid types and default values
     valid_types = {"bool", "choice", "int", "float"}
@@ -77,6 +77,7 @@ def test_schema_structure():
     assert item["section"] == "video"
     assert item["type"] == "bool"
     assert item["default"] == "true"
+    assert get_setting_by_id("pagesize") is None
 
     video_settings = get_settings_by_category("video")
     assert len(video_settings) >= 12
@@ -152,9 +153,9 @@ def test_firmware_settings_tool_run_view_report(tmp_path):
     userdata = str(tmp_path / "userdata")
     tool = FirmwareSettingsTool(userdata_path=userdata)
 
-    # Main menu options: 0-6 categories, 7: View Status Report, 8: Restore Backup
-    # Select 7 (View Status Report), then select -1 (Cancel/Exit)
-    with patch("resources.lib.tools.firmware_settings.dialog_select", side_effect=[7, -1]):
+    # Main menu options: 0-5 categories, 6: View Status Report, 7: Restore Backup
+    # Select 6 (View Status Report), then select -1 (Cancel/Exit)
+    with patch("resources.lib.tools.firmware_settings.dialog_select", side_effect=[6, -1]):
         with patch("resources.lib.tools.firmware_settings.dialog_textviewer") as mock_viewer:
             tool.run({})
             mock_viewer.assert_called_once()
