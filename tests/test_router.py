@@ -39,7 +39,20 @@ def test_menu_entries_completeness():
     actions = [e[0] for e in entries]
     assert "speedtest" in actions
     assert "kodi_optimizer" in actions
+    assert "firmware_settings" in actions
     assert "about" in actions
+
+
+def test_firmware_settings_registered():
+    from resources.lib.tools import FirmwareSettingsTool
+    from resources.lib.tools.base_tool import ToolRegistry
+    tool = ToolRegistry.get("firmware_settings")
+    assert tool is not None
+    assert isinstance(tool, FirmwareSettingsTool)
+    assert tool.id == "firmware_settings"
+    assert tool.order == 17
+
+
 
 
 def test_run_tool_error_handling():

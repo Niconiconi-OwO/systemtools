@@ -4,6 +4,7 @@
 from .base_tool import BaseTool, ToolRegistry
 from .disk_benchmark import DiskBenchmarkTool
 from .dtb_tool import DtbTool, is_dtb_protected, set_dtb_protection
+from .firmware_settings import FirmwareSettingsTool
 from .kodi_optimizer import KodiOptimizerTool
 from .log_cleaner import LogCleanerTool
 from .net_config import NetConfigTool
@@ -18,6 +19,7 @@ __all__ = [
     "DtbTool",
     "RamCleanerTool",
     "KodiOptimizerTool",
+    "FirmwareSettingsTool",
     "NetSpeedtestTool",
     "DiskBenchmarkTool",
     "NetConfigTool",
@@ -25,3 +27,4 @@ __all__ = [
     "is_dtb_protected",
     "set_dtb_protection",
 ]
+
