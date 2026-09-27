@@ -144,4 +144,96 @@ def test_xml_engine_read_write(tmp_path):
     assert engine.read_setting_value(item) == "true"
 
 
+def test_firmware_settings_tool_run_view_report(tmp_path):
+    """Test viewing status report through FirmwareSettingsTool."""
+    from unittest.mock import patch
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+
+    # Main menu options: 0-6 categories, 7: View Status Report, 8: Restore Backup
+    # Select 7 (View Status Report), then select -1 (Cancel/Exit)
+    with patch("resources.lib.tools.firmware_settings.dialog_select", side_effect=[7, -1]):
+        with patch("resources.lib.tools.firmware_settings.dialog_textviewer") as mock_viewer:
+            tool.run({})
+            mock_viewer.assert_called_once()
+            report_text = mock_viewer.call_args[0][1]
+            assert "subtitleasyncparse" in report_text
+
+
+def test_firmware_settings_tool_edit_bool(tmp_path):
+    """Test toggling boolean setting value."""
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+    item = get_setting_by_id("subtitleasyncparse")
+
+    res = tool._edit_setting_value(item, current_val="false")
+    assert res is True
+    assert tool.engine.read_setting_value(item) == "true"
+    assert tool.has_changes is True
+
+
+def test_firmware_settings_tool_edit_choice(tmp_path):
+    """Test editing choice setting value."""
+    from unittest.mock import patch
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+    item = get_setting_by_id("asyncfullscreenosd")
+
+    # Select choice index 1 (value "1")
+    with patch("resources.lib.tools.firmware_settings.dialog_select", return_value=1):
+        res = tool._edit_setting_value(item, current_val="2")
+        assert res is True
+        assert tool.engine.read_setting_value(item) == "1"
+
+
+def test_firmware_settings_tool_edit_numeric_validation(tmp_path):
+    """Test input validation for numerical settings (range rejection and recovery)."""
+    from unittest.mock import patch
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+    item = get_setting_by_id("sinksettleholdms")  # range: 0-2000
+
+    # User enters invalid non-numeric, then out of range 9999, then valid 300
+    with patch("resources.lib.tools.firmware_settings.dialog_input", side_effect=["invalid", "9999", "300"]):
+        with patch("resources.lib.tools.firmware_settings.dialog_ok") as mock_ok:
+            res = tool._edit_setting_value(item, current_val="0")
+            assert res is True
+            assert tool.engine.read_setting_value(item) == "300"
+            assert mock_ok.call_count == 2
+
+
+def test_firmware_settings_tool_reboot_on_exit(tmp_path):
+    """Test that tool prompts reboot on exit only when changes were made."""
+    from unittest.mock import patch
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+
+    # 1. No changes made, immediately exit (-1)
+    with patch("resources.lib.tools.firmware_settings.dialog_select", return_value=-1):
+        with patch("resources.lib.tools.firmware_settings.dialog_yesno") as mock_yesno:
+            tool.run({})
+            mock_yesno.assert_not_called()
+
+    # 2. Changes made, then exit (-1)
+    tool.has_changes = True
+    with patch("resources.lib.tools.firmware_settings.dialog_select", return_value=-1):
+        with patch("resources.lib.tools.firmware_settings.dialog_yesno", return_value=True) as mock_yesno:
+            with patch.object(tool, "_do_restart") as mock_restart:
+                tool.run({})
+                mock_yesno.assert_called_once()
+                mock_restart.assert_called_once()
+
+
+
+
 

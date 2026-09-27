@@ -11,8 +11,27 @@ import shutil
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..common.kodi_ui import translate_path
+from ..common.kodi_ui import (
+    dialog_input,
+    dialog_ok,
+    dialog_select,
+    dialog_textviewer,
+    dialog_yesno,
+    get_string,
+    show_notification,
+    translate_path,
+)
 from ..common.logger import debug, error, info
+from ..common.system_exec import run_command
+from .base_tool import BaseTool, ToolRegistry
+
+try:
+    import xbmc
+    _HAS_XBMC = True
+except ImportError:
+    _HAS_XBMC = False
+    xbmc = None
+
 
 DEFAULT_CE_USERDATA = "/storage/.kodi/userdata"
 
@@ -671,4 +690,230 @@ class FirmwareXmlEngine:
     def get_all_status(self) -> List[Tuple[Dict[str, Any], Optional[str]]]:
         """Return list of (item, current_value) for all schema items."""
         return [(item, self.read_setting_value(item)) for item in SETTINGS_SCHEMA]
+
+
+@ToolRegistry.register
+class FirmwareSettingsTool(BaseTool):
+    """Interactive R10/F10 firmware advanced settings manager."""
+
+    id = "firmware_settings"
+    title_id = 31000
+    description_id = 31001
+    icon = "DefaultAddonProgram.png"
+    order = 17
+
+    def __init__(self, userdata_path: Optional[str] = None):
+        self.engine = FirmwareXmlEngine(userdata_path=userdata_path)
+        self.has_changes = False
+
+    def run(self, params: Dict[str, str]) -> None:
+        title = get_string(31000, "R10/F10 Firmware Advanced Settings")
+        info(f"FirmwareSettingsTool invoked on userdata: {self.engine.userdata_path}")
+
+        while True:
+            options = []
+            for i, cat in enumerate(CATEGORIES):
+                cat_title = get_string(cat["title_id"], cat["desc"])
+                items = get_settings_by_category(cat["id"])
+                options.append(f"{i + 1}. {cat_title} ({len(items)})")
+
+            status_idx = len(CATEGORIES)
+            restore_idx = len(CATEGORIES) + 1
+            options.append(f"{status_idx + 1}. {get_string(31009, 'View Status Report')}")
+            options.append(f"{restore_idx + 1}. {get_string(31010, 'Restore Configurations from Backup (.bak)')}")
+
+            idx = dialog_select(title, options)
+            if idx < 0:
+                break
+            elif idx < len(CATEGORIES):
+                self._show_settings_in_category(CATEGORIES[idx])
+            elif idx == status_idx:
+                self._show_status_report()
+            elif idx == restore_idx:
+                self._restore_backup_dialog()
+
+        # Prompt reboot upon exiting if any change was made
+        if self.has_changes:
+            reboot_msg = get_string(
+                31014,
+                "Advanced settings have been modified. Kodi restart is required to take effect. Reboot now?",
+            )
+            if dialog_yesno(title, reboot_msg):
+                self._do_restart()
+
+    def _show_settings_in_category(self, category: Dict[str, Any]) -> None:
+        cat_title = get_string(category["title_id"], category["desc"])
+        items = get_settings_by_category(category["id"])
+        if not items:
+            return
+
+        while True:
+            options = []
+            for i, item in enumerate(items):
+                val = self.engine.read_setting_value(item)
+                if val is None:
+                    status_str = get_string(31018, "Not set")
+                elif item["type"] == "bool":
+                    status_str = get_string(31019, "Enabled") if val.lower() == "true" else get_string(31020, "Disabled")
+                else:
+                    unit = item.get("unit", "")
+                    status_str = f"{val}{unit}" if unit else val
+
+                t_str = get_string(item["title_id"], item["id"])
+                d_str = get_string(item["desc_id"], "")
+                options.append(f"{i + 1}. [{status_str}] {t_str} - {d_str}")
+
+            idx = dialog_select(cat_title, options)
+            if idx < 0:
+                break
+            self._show_setting_detail(items[idx])
+
+    def _show_setting_detail(self, item: Dict[str, Any]) -> None:
+        title = get_string(item["title_id"], item["id"])
+        while True:
+            val = self.engine.read_setting_value(item)
+            if val is None:
+                current_display = get_string(31018, "Not set")
+            elif item["type"] == "bool":
+                current_display = get_string(31019, "Enabled") if val.lower() == "true" else get_string(31020, "Disabled")
+            else:
+                unit = item.get("unit", "")
+                current_display = f"{val}{unit}" if unit else val
+
+            default_display = str(item["default"])
+            if item["type"] == "bool":
+                default_display = get_string(31019, "Enabled") if default_display.lower() == "true" else get_string(31020, "Disabled")
+            elif item.get("unit"):
+                default_display = f"{default_display}{item['unit']}"
+
+            header_info = get_string(31017, "Current Value: %s | Recommended: %s") % (current_display, default_display)
+
+            options = [
+                f"1. {get_string(31011, 'Modify Value')} [{current_display}]",
+                f"2. {get_string(31012, 'Reset to Recommended Default')} [{default_display}]",
+                f"3. {get_string(30022, 'View Technical Explanation')}",
+            ]
+
+            d_title = f"{title} ({item['tag']})"
+            idx = dialog_select(d_title, options)
+            if idx < 0:
+                break
+            elif idx == 0:
+                self._edit_setting_value(item, current_val=val)
+            elif idx == 1:
+                confirm_msg = get_string(31023, "Reset this setting to default value: %s?") % default_display
+                if dialog_yesno(d_title, confirm_msg):
+                    self.engine.write_setting_value(item, str(item["default"]))
+                    self.has_changes = True
+                    show_notification(
+                        get_string(31000, "R10/F10 Firmware Advanced Settings"),
+                        get_string(31013, "Saved: %s = %s") % (item["tag"], item["default"]),
+                    )
+            elif idx == 2:
+                help_text = get_string(item["help_id"], "")
+                dialog_textviewer(d_title, f"{header_info}\n\n{help_text}")
+
+    def _edit_setting_value(self, item: Dict[str, Any], current_val: Optional[str]) -> bool:
+        t_title = get_string(item["title_id"], item["id"])
+        notify_title = get_string(31000, "R10/F10 Firmware Advanced Settings")
+
+        if item["type"] == "bool":
+            new_val = "false" if (current_val and current_val.lower() == "true") else "true"
+            self.engine.write_setting_value(item, new_val)
+            self.has_changes = True
+            show_notification(notify_title, get_string(31013, "Saved: %s = %s") % (item["tag"], new_val))
+            return True
+
+        elif item["type"] == "choice":
+            choices = item["choices"]
+            options = []
+            for c in choices:
+                is_curr = (current_val == c)
+                options.append(f"{c} {'*' if is_curr else ''}")
+
+            idx = dialog_select(t_title, options)
+            if idx < 0:
+                return False
+            new_val = choices[idx]
+            self.engine.write_setting_value(item, new_val)
+            self.has_changes = True
+            show_notification(notify_title, get_string(31013, "Saved: %s = %s") % (item["tag"], new_val))
+            return True
+
+        elif item["type"] in ("int", "float"):
+            min_v, max_v = item.get("range", (0, 999999999))
+            unit = item.get("unit", "")
+            prompt = get_string(31015, "Enter new value (range: %s - %s %s):") % (min_v, max_v, unit)
+            default_input = str(current_val if current_val is not None else item["default"])
+
+            while True:
+                entered = dialog_input(prompt, default=default_input)
+                if not entered:
+                    return False
+                try:
+                    if item["type"] == "int":
+                        val_num = int(entered)
+                    else:
+                        val_num = float(entered)
+                    if val_num < min_v or val_num > max_v:
+                        dialog_ok(
+                            notify_title,
+                            get_string(31016, "Invalid input or value out of range [%s - %s]!") % (min_v, max_v),
+                        )
+                        continue
+                    new_val = str(val_num)
+                    self.engine.write_setting_value(item, new_val)
+                    self.has_changes = True
+                    show_notification(notify_title, get_string(31013, "Saved: %s = %s") % (item["tag"], new_val))
+                    return True
+                except ValueError:
+                    dialog_ok(
+                        notify_title,
+                        get_string(31016, "Invalid input or value out of range [%s - %s]!") % (min_v, max_v),
+                    )
+                    continue
+
+        return False
+
+    def _show_status_report(self) -> None:
+        title = get_string(31158, "R10/F10 Firmware Settings Overview")
+        lines = [f"=== {title} ===", ""]
+
+        for cat in CATEGORIES:
+            cat_title = get_string(cat["title_id"], cat["desc"])
+            lines.append(f"[{cat_title}]")
+            for item in get_settings_by_category(cat["id"]):
+                val = self.engine.read_setting_value(item)
+                status_str = val if val is not None else get_string(31018, "Not set")
+                t_str = get_string(item["title_id"], item["id"])
+                lines.append(f"  * {item['tag']} ({t_str}): {status_str} [default: {item['default']}]")
+            lines.append("")
+
+        dialog_textviewer(title, "\n".join(lines))
+
+    def _restore_backup_dialog(self) -> None:
+        title = get_string(31000, "R10/F10 Firmware Advanced Settings")
+        if not self.engine.has_backup():
+            dialog_ok(title, get_string(31021, "No backup file found to restore."))
+            return
+
+        confirm_msg = get_string(31024, "Are you sure you want to restore all advanced settings from .bak?")
+        if not dialog_yesno(title, confirm_msg):
+            return
+
+        if self.engine.restore_backup():
+            reboot_msg = get_string(31022, "Backup restored successfully! Kodi restart is required. Reboot now?")
+            if dialog_yesno(title, reboot_msg):
+                self._do_restart()
+
+    def _do_restart(self) -> None:
+        run_command("sync")
+        if _HAS_XBMC and xbmc:
+            try:
+                xbmc.restart()
+                return
+            except Exception:
+                pass
+        run_command("reboot -f")
+
 
