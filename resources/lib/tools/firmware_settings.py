@@ -6,7 +6,29 @@ advanced settings (ALSA sink, hardware decoding, VC-1, Mali EGL pipeline,
 dirty regions, network timeouts, and Blu-ray ISO block cache).
 """
 
-from typing import Any, Dict, List, Optional
+import os
+import shutil
+import xml.etree.ElementTree as ET
+from typing import Any, Dict, List, Optional, Tuple
+
+from ..common.kodi_ui import translate_path
+from ..common.logger import debug, error, info
+
+DEFAULT_CE_USERDATA = "/storage/.kodi/userdata"
+
+
+def get_default_userdata_dir() -> str:
+    """Detect the active Kodi userdata path."""
+    if os.path.isdir(DEFAULT_CE_USERDATA):
+        return DEFAULT_CE_USERDATA
+    try:
+        translated = translate_path("special://userdata/")
+        if os.path.isdir(translated):
+            return translated
+    except Exception:
+        pass
+    return DEFAULT_CE_USERDATA
+
 
 CATEGORIES: List[Dict[str, Any]] = [
     {
@@ -544,3 +566,109 @@ def get_setting_by_id(setting_id: str) -> Optional[Dict[str, Any]]:
 def get_settings_by_category(category_id: str) -> List[Dict[str, Any]]:
     """Retrieve all setting schema items in a given category."""
     return [item for item in SETTINGS_SCHEMA if item["category"] == category_id]
+
+
+class FirmwareXmlEngine:
+    """Non-destructive XML merge and backup manager for advancedsettings.xml."""
+
+    def __init__(self, userdata_path: Optional[str] = None):
+        self.userdata_path = userdata_path if userdata_path else get_default_userdata_dir()
+        self.xml_path = os.path.join(self.userdata_path, "advancedsettings.xml")
+        self.bak_path = f"{self.xml_path}.bak"
+
+    def get_xml_path(self) -> str:
+        return self.xml_path
+
+    def has_backup(self) -> bool:
+        return os.path.exists(self.bak_path)
+
+    def backup_config(self) -> Optional[str]:
+        """Create a .bak copy of advancedsettings.xml if it exists and no .bak yet."""
+        if os.path.exists(self.xml_path) and not os.path.exists(self.bak_path):
+            try:
+                shutil.copy2(self.xml_path, self.bak_path)
+                info(f"Created advancedsettings backup: {self.bak_path}")
+                return self.bak_path
+            except Exception as e:
+                error(f"Failed to create backup: {e}")
+        return None
+
+    def restore_backup(self) -> bool:
+        """Restore advancedsettings.xml from .bak backup."""
+        if not os.path.exists(self.bak_path):
+            return False
+        try:
+            shutil.copy2(self.bak_path, self.xml_path)
+            info(f"Restored advancedsettings from: {self.bak_path}")
+            return True
+        except Exception as e:
+            error(f"Failed to restore backup: {e}")
+            return False
+
+    def _get_tree_and_root(self) -> Tuple[Optional[ET.ElementTree], ET.Element]:
+        """Parse existing XML file or initialize a fresh root element."""
+        root = None
+        tree = None
+        if os.path.exists(self.xml_path):
+            try:
+                tree = ET.parse(self.xml_path)
+                root = tree.getroot()
+            except Exception as e:
+                debug(f"Failed to parse {self.xml_path} ({e}), initializing fresh root.")
+                root = None
+
+        if root is None or root.tag != "advancedsettings":
+            root = ET.Element("advancedsettings")
+            tree = ET.ElementTree(root)
+        return tree, root
+
+    def read_setting_value(self, item: Dict[str, Any]) -> Optional[str]:
+        """Read the current setting value from advancedsettings.xml."""
+        if not os.path.exists(self.xml_path):
+            return None
+
+        _, root = self._get_tree_and_root()
+        section = item["section"]
+        tag = item["tag"]
+
+        sections = section if isinstance(section, list) else [section]
+        for s in sections:
+            parent = root.find(s)
+            if parent is not None:
+                val = parent.findtext(tag)
+                if val is not None:
+                    return val.strip()
+        return None
+
+    def write_setting_value(self, item: Dict[str, Any], new_value: str) -> None:
+        """Incrementally update or insert setting value, preserving existing nodes."""
+        os.makedirs(self.userdata_path, exist_ok=True)
+        self.backup_config()
+
+        _, root = self._get_tree_and_root()
+        section = item["section"]
+        tag = item["tag"]
+
+        sections = section if isinstance(section, list) else [section]
+        for s in sections:
+            parent = root.find(s)
+            if parent is None:
+                parent = ET.SubElement(root, s)
+            elem = parent.find(tag)
+            if elem is None:
+                elem = ET.SubElement(parent, tag)
+            elem.text = str(new_value)
+
+        try:
+            ET.indent(root, space="  ", level=0)
+        except AttributeError:
+            pass
+
+        tree = ET.ElementTree(root)
+        tree.write(self.xml_path, encoding="utf-8", xml_declaration=True)
+        info(f"Updated setting {item['id']}={new_value} in {self.xml_path}")
+
+    def get_all_status(self) -> List[Tuple[Dict[str, Any], Optional[str]]]:
+        """Return list of (item, current_value) for all schema items."""
+        return [(item, self.read_setting_value(item)) for item in SETTINGS_SCHEMA]
+

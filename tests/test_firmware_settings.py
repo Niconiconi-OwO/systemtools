@@ -4,6 +4,13 @@
 import os
 import re
 
+from resources.lib.tools.firmware_settings import (
+    CATEGORIES,
+    SETTINGS_SCHEMA,
+    get_setting_by_id,
+    get_settings_by_category,
+)
+
 
 def test_firmware_settings_i18n_keys():
     """Verify that essential string IDs for firmware settings exist in po files."""
@@ -73,4 +80,68 @@ def test_schema_structure():
 
     video_settings = get_settings_by_category("video")
     assert len(video_settings) >= 12
+
+
+def test_xml_engine_read_write(tmp_path):
+    """Test XML read, write, incremental merge, multi-parent tags, backup, and restore."""
+    import xml.etree.ElementTree as ET
+    from resources.lib.tools.firmware_settings import FirmwareXmlEngine
+
+    userdata = str(tmp_path / "userdata")
+    os.makedirs(userdata, exist_ok=True)
+    engine = FirmwareXmlEngine(userdata_path=userdata)
+
+    # 1. Read unconfigured setting returns None
+    item = get_setting_by_id("subtitleasyncparse")
+    val = engine.read_setting_value(item)
+    assert val is None
+
+    # 2. Write setting and verify file created
+    engine.write_setting_value(item, "true")
+    assert os.path.exists(engine.get_xml_path())
+    assert engine.read_setting_value(item) == "true"
+
+    # 3. Non-destructive merge: inject an unrelated tag into the file
+    as_path = engine.get_xml_path()
+    tree = ET.parse(as_path)
+    root = tree.getroot()
+    net = ET.SubElement(root, "network")
+    custom_tag = ET.SubElement(net, "customtag")
+    custom_tag.text = "preserved"
+    tree.write(as_path, encoding="utf-8")
+
+    # Write another firmware setting
+    audio_item = get_setting_by_id("sinksettleholdms")
+    engine.write_setting_value(audio_item, "150")
+
+    # Verify customtag is still preserved and new setting updated
+    tree2 = ET.parse(as_path)
+    root2 = tree2.getroot()
+    assert root2.findtext("network/customtag") == "preserved"
+    assert root2.findtext("audio/sinksettleholdms") == "150"
+    assert root2.findtext("video/subtitleasyncparse") == "true"
+
+    # 4. Multi-parent tags (connecttimeout across 4 database sections)
+    db_item = get_setting_by_id("db_connecttimeout")
+    engine.write_setting_value(db_item, "8")
+    tree3 = ET.parse(as_path)
+    root3 = tree3.getroot()
+    assert root3.findtext("videodatabase/connecttimeout") == "8"
+    assert root3.findtext("musicdatabase/connecttimeout") == "8"
+    assert root3.findtext("tvdatabase/connecttimeout") == "8"
+    assert root3.findtext("epgdatabase/connecttimeout") == "8"
+
+    # Read back multi-parent value
+    assert engine.read_setting_value(db_item) == "8"
+
+    # 5. Backup & restore
+    assert engine.has_backup()
+    engine.write_setting_value(item, "false")
+    assert engine.read_setting_value(item) == "false"
+    success = engine.restore_backup()
+    assert success is True
+    # item should be restored back to "true"
+    assert engine.read_setting_value(item) == "true"
+
+
 
