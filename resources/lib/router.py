@@ -166,7 +166,7 @@ def show_about_info() -> None:
     """Show Addon & Hardware platform diagnostic information."""
     sys_info = get_system_info()
     addon = get_addon()
-    version = addon.getAddonInfo("version") if addon else "1.0.3"
+    version = addon.getAddonInfo("version") if addon else "1.0.4"
     dual_boot_str = get_string(30016, "Yes") if sys_info.dual_boot_supported else get_string(30017, "No")
 
     info_lines = [
@@ -186,10 +186,11 @@ def show_about_info() -> None:
         f"  2. {get_string(30700, 'DTB Protection & Management')}",
         f"  3. {get_string(30800, 'Free System RAM')}",
         f"  4. {get_string(30900, 'Kodi Performance Optimizer')}",
-        f"  5. {get_string(30002, 'Network Speed Test')}",
-        f"  6. {get_string(30003, 'Disk Benchmark')}",
-        f"  7. {get_string(30004, 'Network Configuration')}",
-        f"  8. {get_string(30005, 'Clear Kodi Logs')}",
+        f"  5. {get_string(31000, 'R10/F10 Firmware Advanced Settings')}",
+        f"  6. {get_string(30002, 'Network Speed Test')}",
+        f"  7. {get_string(30003, 'Disk Benchmark')}",
+        f"  8. {get_string(30004, 'Network Configuration')}",
+        f"  9. {get_string(30005, 'Clear Kodi Logs')}",
     ]
     dialog_textviewer(get_string(30006, "System Information"), "\n".join(info_lines))
 

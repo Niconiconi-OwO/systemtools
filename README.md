@@ -32,7 +32,19 @@
   - 为 SQLite 视频数据库分配 32MB 内存页缓存 (`<cache_size>-32768</cache_size>`)，海量媒体索引瞬间常驻 RAM。
 - **安全备份与一键还原**：修改前自动为数据库和 `advancedsettings.xml` 生成 `.bak` 备份，支持一键无损还原。
 
-### 5. 全协议视频流测速与网络测速 (Network Speed Test)
+### 5. R10/F10 固件高级设置 (Firmware Advanced Settings)
+- **底层硬件专项深度调优**：专门针对 CoreELEC CPM R10、F10 等定制固件和晶晨芯片提供 35+ 项核心优化。
+  - **音频引擎与 ALSA 输出**：PCM 最大位深限制（解决外部 DAC 握手 32bit 异常与爆音）、音频输出初始化静音保持时间（切格式切采样率防噼啪爆音）。
+  - **视频播放与硬件解码**：蓝光菜单缓冲队列、无缝分段边界排空、异步字幕解析（消除 ASS/PGS 特效字幕加载掉帧）、全屏 OSD 异步渲染（解耦进度条与视频主帧率）、异步视频图层渲染、片尾最小 Seek 距离保护、Dolby Vision VSVDB V1 兼容模式、隔行扫描反交错延迟补偿、视频场频保持、VC-1 硬件解码三项优化（自动向驱动注入逐行/隔行模式、坏帧丢弃机制、时间戳自动校准）。
+  - **GUI 渲染与 Mali 绘图管线**：基于 EGL Buffer Age 局部重绘（大幅降低 Mali GPU 负载与发热）、最大脏区跟踪矩形数、按键交互后跳过休眠活动窗口时间、菜单静止空闲帧率上限（极度降温省电）、皮肤 HDR FBO 宽色域渲染、客制化合成与脏区调试、各向异性过滤、Front-to-Back 渲染排序减少 Overdraw、几何缓冲清空、VSync 与 GPU 帧交换等待同步、sRGB HDR 色彩校正混合（防 SDR 皮肤覆盖在 HDR 视频上刺眼过饱和）、界面合成抖动抗色带处理、异步材质上传 PBO（快速滚动海报不卡顿）、皮肤 Mipmapping 渐远贴图与负向 LOD 锐化偏差。
+  - **媒体库管理**：本地同名封面/海报是否区分大小写（NAS 挂载混有大写后缀时不漏图）。
+  - **局域网协议**：NFS 连接超时时间与自动重试次数。
+  - **远程数据库超时保护**：Video/Music/TV/EPG 远程 MySQL/MariaDB 5 秒超时保护，防止断网时开机卡死在黑屏。
+  - **蓝光 ISO 块缓存**：优化晶晨芯片直接解包读取 ISO 原盘时的 I/O 吞吐，可调整缓存页大小（默认 256KB）、最大内存缓存限制（默认 64MB）与预读页数。
+- **分类呈现与原理解析**：不提供死板的预设大礼包，而是按 7 大功能模块清晰罗列，点击即可查阅原汁原味的原理解析说明长文本，明明白白调优。
+- **实时安全合并与备份还原**：数值修改后立即安全增量更新 `advancedsettings.xml`，绝不触碰或破坏已有其他非冲突配置；首次写入自动备份 `.bak`，支持一键还原；退出时若检测到配置变更，贴心询问是否重启 Kodi 生效。
+
+### 6. 全协议视频流测速与网络测速 (Network Speed Test)
 - **局域网 / 网盘全协议测速**：
   - 基于 Kodi 原生 `xbmcvfs`，全面覆盖 `smb://`、`nfs://`、`webdav://`、`dav://`、`http://`、`https://`、`ftp://` 及本地挂载路径。
   - 选择任意大文件视频（建议 ≥1GB），采用 1MB 分块读取，**随读随弃，零内存缓存**。
@@ -42,19 +54,19 @@
 - **互联网外网宽带测速**：
   - 测试 TCP 延迟 (Ping)、公网 CDN 多线程下载带宽与上传带宽。
 
-### 6. 存储读写测速 (Disk Benchmark)
+### 7. 存储读写测速 (Disk Benchmark)
 - 支持测试机顶盒内置存储 (eMMC)、SD 卡、U盘、外置移动硬盘或 NAS 挂载路径。
 - **顺序写入与读取** (MB/s)。
 - **4K 随机写入与读取** (MB/s 及 IOPS 吞吐量)。
 - 强制同步 (`fsync` / `O_SYNC` / `O_BINARY`) 并通过内核 `drop_caches` 与 `posix_fadvise` 彻底消除内存缓存干扰，测得真实物理闪存性能。
 - 退出与异常时通过 `finally` 安全自动清理临时测试文件。
 
-### 7. 系统网络配置 (Network Configuration)
+### 8. 系统网络配置 (Network Configuration)
 - 查看网卡接口（eth0、wlan0）、当前 IP、子网掩码、网关、DNS。
 - 支持一键切换 DHCP 自动获取或配置静态 IP / 网关 / DNS。
 - 针对 CoreELEC / LibreELEC 的 ConnMan 服务及通用 Linux `ip` 指令无缝集成。
 
-### 8. Kodi 日志管理与一键清理 (Kodi Log Cleaner)
+### 9. Kodi 日志管理与一键清理 (Kodi Log Cleaner)
 - 自动定位 Kodi 日志目录 (`special://logpath/`)。
 - 一键查看最近运行日志 (Tail Viewer)。
 - 一键清空 `kodi.log`，清理 `kodi.old.log` 及崩溃日志 (`kodi_crashlog*`)。
@@ -68,13 +80,13 @@
 ```bash
 python scripts/package.py
 ```
-生成安装包位于 `dist/plugin.program.systemtools-1.0.3.zip`。
+生成安装包位于 `dist/plugin.program.systemtools-1.0.4.zip`。
 
 ### 在 Kodi 中安装
 1. 打开 Kodi -> **设置 (Settings)** -> **插件 (Add-ons)**。
 2. 开启 **未知来源 (Unknown sources)**。
 3. 选择 **从 Zip 文件安装 (Install from zip file)**。
-4. 浏览并选择 `dist/plugin.program.systemtools-1.0.3.zip` 即可完成安装。
+4. 浏览并选择 `dist/plugin.program.systemtools-1.0.4.zip` 即可完成安装。
 
 ---
 
@@ -108,7 +120,7 @@ flake8 resources/ addon.py tests/
 
 ---
 
-## 全皮肤兼容统一 UI 架构 (v1.0.3)
+## 全皮肤兼容统一 UI 架构 (v1.0.3+)
 
 ### 为什么选择原生详细选择对话框？
 * **传统目录的皮肤缺陷**：原先通过 `xbmcplugin` 生成的 `plugin://` 目录列表，必须由**激活皮肤提供的媒体窗口**（`MyPrograms.xml`）来承载渲染。Kodi **不会跨皮肤回退** 窗口 XML 文件。如果第三方皮肤裁减了程序列表或插件视图失效，用户点击插件时就会出现无反应、黑屏或卡死。
@@ -135,10 +147,16 @@ flake8 resources/ addon.py tests/
 
 ## 更新日志
 
+### 1.0.4
+* **新增 R10/F10 固件高级设置**：全面集成 Amlogic SoC 晶晨硬件解码注入、ALSA 音频驱动抗爆音、Mali GPU 局部脏区重绘管线、蓝光无缝分段排空与 ISO 块缓存等 35+ 项定制固件核心参数调优。
+* **声明式 Schema 与原理级解析**：按 7 大功能模块分类展示，点击可查看详细原理解析长文本，支持布尔开关、枚举单选与数值输入微调。
+* **无损增量 XML 合并与备份恢复**：实时增量更新 `advancedsettings.xml`，绝不覆盖已有非冲突配置，首次写入自动生成 `.bak`，支持一键还原并在退出时友好提示重启。
+
 ### 1.0.3
 * **全皮肤兼容架构重构**：主菜单统一采用 Kodi 原生详细对话框（`useDetails=True`），彻底消除第三方皮肤缺失 `MyPrograms.xml` 导致的调不出界面或闪退问题。
 * **完善容器生命周期调度**：有容器启动时自动以 `succeeded=False` 安全释放容器，无容器启动直接呼出，秒级响应。
 * **独立副标题与 i18n 补全**：为各工具配置独立的 `description_id` 与中英文说明，主菜单展示丰富功能简介。
 * **安全异常捕获与通知**：工具执行统一异常捕获并输出堆栈日志与 Kodi Toast 通知，杜绝静默失败。
 * **配置规范性修正**：修正 `settings.xml` 中 `<allowempty>` 约束标签嵌套；`addon.xml` 增加语言声明与版本更新。
+
 
