@@ -102,7 +102,7 @@ def test_remote_adapter_snapshot_backup_and_restore(tmp_path):
     with open(orig_conf, "w") as f:
         f.write("factory_remote_code=0x1234")
 
-    # 2. Existing hwdb
+    # 2. Existing custom hwdb (e.g. from user)
     orig_hwdb = os.path.join(hwdb_dir, "custom.hwdb")
     with open(orig_hwdb, "w") as f:
         f.write("KEYBOARD_KEY_123=play")
@@ -130,10 +130,9 @@ def test_remote_adapter_snapshot_backup_and_restore(tmp_path):
 
     # Verify backup exists
     assert os.path.exists(os.path.join(backup_dir, "remote.conf"))
-    assert os.path.exists(os.path.join(backup_dir, "hwdb.d", "custom.hwdb"))
 
-    # Verify new remote files are active
-    assert os.path.exists(os.path.join(hwdb_dir, "remote_b.hwdb"))
+    # Verify new remote files are active (with safe prefix)
+    assert os.path.exists(os.path.join(hwdb_dir, "remote_adapter_remote_b.hwdb"))
     assert os.path.exists(os.path.join(keymaps_dir, "remote_adapter_remote_b.xml"))
 
     # Step 2: Restore backup
@@ -143,9 +142,9 @@ def test_remote_adapter_snapshot_backup_and_restore(tmp_path):
 
     # Verify restored state:
     # 1. remote_b files removed
-    assert not os.path.exists(os.path.join(hwdb_dir, "remote_b.hwdb"))
+    assert not os.path.exists(os.path.join(hwdb_dir, "remote_adapter_remote_b.hwdb"))
     assert not os.path.exists(os.path.join(keymaps_dir, "remote_adapter_remote_b.xml"))
-    # 2. original files restored
+    # 2. original custom files untouched
     assert os.path.exists(os.path.join(hwdb_dir, "custom.hwdb"))
     assert os.path.exists(orig_conf)
     with open(orig_conf, "r") as f:
@@ -192,6 +191,149 @@ def test_remote_adapter_factory_conf_protection(tmp_path):
     assert os.path.exists(protected_conf)
     with open(protected_conf, "r") as f:
         assert f.read() == "original factory remote config"
+
+
+def test_remote_adapter_restore_factory_conf(tmp_path):
+    from resources.lib.tools.remote_adapter import RemoteAdapterTool
+
+    flash_dir = str(tmp_path / "flash")
+    os.makedirs(flash_dir, exist_ok=True)
+
+    factory_conf = os.path.join(flash_dir, "remote.conf.factory")
+    with open(factory_conf, "w") as f:
+        f.write("factory_conf_content")
+
+    tool = RemoteAdapterTool(flash_dir=flash_dir)
+
+    with patch("resources.lib.tools.remote_adapter.dialog_yesno", return_value=False), \
+         patch.object(tool, "_set_flash_writable", return_value=True), \
+         patch.object(tool, "_set_flash_readonly"):
+        tool._restore_factory_conf("Title")
+
+    active_conf = os.path.join(flash_dir, "remote.conf")
+    assert os.path.exists(active_conf)
+    with open(active_conf, "r") as f:
+        assert f.read() == "factory_conf_content"
+    assert not os.path.exists(factory_conf)
+
+
+def test_remote_adapter_missing_xml_in_preset(tmp_path):
+    """When a remote preset has no XML, adaptation succeeds without creating XML."""
+    from resources.lib.tools.remote_adapter import RemoteAdapterTool
+
+    keymaps_dir = str(tmp_path / "keymaps")
+    hwdb_dir = str(tmp_path / "hwdb.d")
+    flash_dir = str(tmp_path / "flash")
+    data_dir = str(tmp_path / "data" / "remotes")
+
+    os.makedirs(keymaps_dir, exist_ok=True)
+    os.makedirs(hwdb_dir, exist_ok=True)
+    os.makedirs(flash_dir, exist_ok=True)
+
+    # Preset only has .conf and .hwdb, NO .xml
+    src_dir = os.path.join(data_dir, "hwdb_only")
+    os.makedirs(src_dir, exist_ok=True)
+    with open(os.path.join(src_dir, "test.hwdb"), "w") as f:
+        f.write("KEY=1")
+    with open(os.path.join(src_dir, "remote.conf"), "w") as f:
+        f.write("CONF=1")
+
+    tool = RemoteAdapterTool(
+        keymaps_dir=keymaps_dir,
+        hwdb_dir=hwdb_dir,
+        flash_dir=flash_dir,
+        backup_dir=str(tmp_path / "backup"),
+        remotes_data_dir=data_dir,
+    )
+
+    with patch("resources.lib.tools.remote_adapter.dialog_yesno", return_value=False), \
+         patch("resources.lib.tools.remote_adapter.run_command", return_value=(0, "", "")):
+        tool._apply_config("Title", {"id": "hwdb_only", "name": "HWDB Only"})
+
+    # No XML in keymaps
+    assert len(os.listdir(keymaps_dir)) == 0
+    # HWDB and conf copied
+    assert os.path.exists(os.path.join(hwdb_dir, "remote_adapter_test.hwdb"))
+    assert os.path.exists(os.path.join(flash_dir, "remote.conf"))
+
+
+def test_remote_adapter_missing_hwdb_and_conf(tmp_path):
+    """When preset only has XML (no hwdb and no conf, like g20pro), no reboot is needed."""
+    from resources.lib.tools.remote_adapter import RemoteAdapterTool
+
+    keymaps_dir = str(tmp_path / "keymaps")
+    hwdb_dir = str(tmp_path / "hwdb.d")
+    flash_dir = str(tmp_path / "flash")
+    data_dir = str(tmp_path / "data" / "remotes")
+
+    os.makedirs(keymaps_dir, exist_ok=True)
+    os.makedirs(hwdb_dir, exist_ok=True)
+    os.makedirs(flash_dir, exist_ok=True)
+
+    # Preset only has gen.xml
+    src_dir = os.path.join(data_dir, "xml_only")
+    os.makedirs(src_dir, exist_ok=True)
+    with open(os.path.join(src_dir, "gen.xml"), "w") as f:
+        f.write("<keymap/>")
+
+    tool = RemoteAdapterTool(
+        keymaps_dir=keymaps_dir,
+        hwdb_dir=hwdb_dir,
+        flash_dir=flash_dir,
+        backup_dir=str(tmp_path / "backup"),
+        remotes_data_dir=data_dir,
+    )
+
+    with patch("resources.lib.tools.remote_adapter.xbmc.executebuiltin") as mock_exec, \
+         patch("resources.lib.tools.remote_adapter.dialog_ok") as mock_ok, \
+         patch.object(tool, "_do_reboot") as mock_reboot:
+        tool._apply_config("Title", {"id": "xml_only", "name": "XML Only"})
+        # Should NOT reboot, only reload keymaps
+        mock_reboot.assert_not_called()
+        mock_exec.assert_called_with("action(reloadkeymaps)")
+        mock_ok.assert_called_once()
+
+
+def test_remote_adapter_user_custom_hwdb_preserved(tmp_path):
+    """User custom .hwdb (e.g. for gamepad) is never deleted."""
+    from resources.lib.tools.remote_adapter import RemoteAdapterTool
+
+    keymaps_dir = str(tmp_path / "keymaps")
+    hwdb_dir = str(tmp_path / "hwdb.d")
+    flash_dir = str(tmp_path / "flash")
+    data_dir = str(tmp_path / "data" / "remotes")
+
+    os.makedirs(keymaps_dir, exist_ok=True)
+    os.makedirs(hwdb_dir, exist_ok=True)
+    os.makedirs(flash_dir, exist_ok=True)
+
+    # User's custom gamepad hwdb
+    user_gamepad = os.path.join(hwdb_dir, "my_gamepad.hwdb")
+    with open(user_gamepad, "w") as f:
+        f.write("GAMEPAD=1")
+
+    # Remote with new hwdb
+    src_dir = os.path.join(data_dir, "remote_c")
+    os.makedirs(src_dir, exist_ok=True)
+    with open(os.path.join(src_dir, "remote_c.hwdb"), "w") as f:
+        f.write("REMOTE_C=1")
+
+    tool = RemoteAdapterTool(
+        keymaps_dir=keymaps_dir,
+        hwdb_dir=hwdb_dir,
+        flash_dir=flash_dir,
+        backup_dir=str(tmp_path / "backup"),
+        remotes_data_dir=data_dir,
+    )
+
+    with patch("resources.lib.tools.remote_adapter.dialog_yesno", return_value=False), \
+         patch("resources.lib.tools.remote_adapter.run_command", return_value=(0, "", "")):
+        tool._apply_config("Title", {"id": "remote_c", "name": "Remote C"})
+
+    # User's gamepad hwdb MUST still be there!
+    assert os.path.exists(user_gamepad)
+    # And remote_c was added
+    assert os.path.exists(os.path.join(hwdb_dir, "remote_adapter_remote_c.hwdb"))
 
 
 def test_remote_adapter_menu_dispatch(tmp_path):
@@ -253,4 +395,3 @@ def test_remote_adapter_reboot_dispatch(tmp_path):
          patch.object(tool, "_do_reboot") as mock_reboot:
         tool._apply_config("Title", {"id": "hwdb_remote", "name": "HWDB Remote"})
         mock_reboot.assert_called_once()
-

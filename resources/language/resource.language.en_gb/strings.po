@@ -1660,6 +1660,14 @@ msgctxt "#31418"
 msgid "Failed to apply remote configuration: %s"
 msgstr "Failed to apply remote configuration: %s"
 
+msgctxt "#31419"
+msgid "Restore Factory IR Remote (remote.conf)"
+msgstr "Restore Factory IR Remote (remote.conf)"
+
+msgctxt "#31420"
+msgid "Factory IR remote configuration restored successfully! Reboot now?"
+msgstr "Factory IR remote configuration restored successfully! Reboot now?"
+
 msgctxt "#31500"
 msgid "Daily Auto Reboot"
 msgstr "Daily Auto Reboot"

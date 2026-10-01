@@ -32,6 +32,11 @@ DEFAULT_FLASH_DIR = "/flash"
 DEFAULT_BACKUP_DIR = "/storage/.remote_backup"
 DEFAULT_CONFIG_DIR = "/storage/.config"
 
+KNOWN_HWDB_NAMES = {
+    "UgoosUR02.hwdb", "4pro.hwdb", "CMCC.hwdb", "cmcc2.hwdb",
+    "dune.hwdb", "huawR22.hwdb", "zidoov10.hwdb", "zidoov12.hwdb",
+}
+
 
 @ToolRegistry.register
 class RemoteAdapterTool(BaseTool):
@@ -93,6 +98,11 @@ class RemoteAdapterTool(BaseTool):
         menu_items = [f"{i + 1}. {r['name']}" for i, r in enumerate(self.REMOTES)]
         menu_items.append(f"★ {get_string(31411, 'Restore Previous Remote Backup')}")
 
+        factory_conf = os.path.join(self.flash_dir, "remote.conf.factory")
+        has_factory = os.path.exists(factory_conf)
+        if has_factory:
+            menu_items.append(f"★ {get_string(31419, 'Restore Factory IR Remote (remote.conf)')}")
+
         header = get_string(31410, "Select Remote to Adapt")
         idx = dialog_select(header, menu_items)
         if idx < 0:
@@ -100,6 +110,8 @@ class RemoteAdapterTool(BaseTool):
 
         if idx == len(self.REMOTES):
             self._restore_backup(title)
+        elif has_factory and idx == len(self.REMOTES) + 1:
+            self._restore_factory_conf(title)
         else:
             selected = self.REMOTES[idx]
             confirm_msg = get_string(31413, "About to adapt remote: [%s]\nExisting configuration will be backed up automatically.\nContinue?") % selected['name']
@@ -121,21 +133,23 @@ class RemoteAdapterTool(BaseTool):
                     if f.startswith("remote_adapter_") and f.endswith(".xml"):
                         shutil.copy2(os.path.join(self.keymaps_dir, f), os.path.join(bk_km_dir, f))
 
-            # 2. Backup hwdb files
+            # 2. Backup remote_adapter hwdb files
             if os.path.exists(self.hwdb_dir):
                 bk_hwdb_dir = os.path.join(self.backup_dir, "hwdb.d")
                 os.makedirs(bk_hwdb_dir, exist_ok=True)
                 for f in os.listdir(self.hwdb_dir):
-                    if f.endswith(".hwdb"):
+                    if (f.startswith("remote_adapter_") or f in KNOWN_HWDB_NAMES) and f.endswith(".hwdb"):
                         shutil.copy2(os.path.join(self.hwdb_dir, f), os.path.join(bk_hwdb_dir, f))
 
             # 3. Backup /flash/remote.conf
             flash_conf = os.path.join(self.flash_dir, "remote.conf")
-            if os.path.exists(flash_conf):
+            had_conf = os.path.exists(flash_conf)
+            if had_conf:
                 shutil.copy2(flash_conf, os.path.join(self.backup_dir, "remote.conf"))
 
             meta = {
                 "backup_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "had_remote_conf": had_conf,
             }
             with open(os.path.join(self.backup_dir, "meta.json"), "w", encoding="utf-8") as f:
                 json.dump(meta, f, indent=2)
@@ -167,10 +181,10 @@ class RemoteAdapterTool(BaseTool):
                 for f in os.listdir(bk_km_dir):
                     shutil.copy2(os.path.join(bk_km_dir, f), os.path.join(self.keymaps_dir, f))
 
-            # 2. Clean current hwdb files and restore backed up ones
+            # 2. Clean current remote_adapter hwdb files and restore backed up ones
             if os.path.exists(self.hwdb_dir):
                 for f in os.listdir(self.hwdb_dir):
-                    if f.endswith(".hwdb"):
+                    if (f.startswith("remote_adapter_") or f in KNOWN_HWDB_NAMES) and f.endswith(".hwdb"):
                         try:
                             os.remove(os.path.join(self.hwdb_dir, f))
                             need_reboot = True
@@ -183,22 +197,25 @@ class RemoteAdapterTool(BaseTool):
                     shutil.copy2(os.path.join(bk_hwdb_dir, f), os.path.join(self.hwdb_dir, f))
                     need_reboot = True
 
-            # 3. Restore /flash/remote.conf or factory conf
+            # 3. Restore /flash/remote.conf based on meta
             bk_conf = os.path.join(self.backup_dir, "remote.conf")
             flash_conf = os.path.join(self.flash_dir, "remote.conf")
-            factory_conf = os.path.join(self.flash_dir, "remote.conf.factory")
 
-            if os.path.exists(bk_conf):
+            had_remote_conf = os.path.exists(bk_conf)
+            meta_file = os.path.join(self.backup_dir, "meta.json")
+            if os.path.exists(meta_file):
+                try:
+                    with open(meta_file, "r", encoding="utf-8") as f:
+                        had_remote_conf = json.load(f).get("had_remote_conf", had_remote_conf)
+                except Exception:
+                    pass
+
+            if had_remote_conf and os.path.exists(bk_conf):
                 self._set_flash_writable()
                 flash_rw = True
                 shutil.copy2(bk_conf, flash_conf)
                 need_reboot = True
-            elif os.path.exists(factory_conf):
-                self._set_flash_writable()
-                flash_rw = True
-                shutil.move(factory_conf, flash_conf)
-                need_reboot = True
-            elif os.path.exists(flash_conf):
+            elif not had_remote_conf and os.path.exists(flash_conf):
                 self._set_flash_writable()
                 flash_rw = True
                 os.remove(flash_conf)
@@ -221,6 +238,26 @@ class RemoteAdapterTool(BaseTool):
         else:
             xbmc.executebuiltin("action(reloadkeymaps)")
             dialog_ok(title, get_string(31414, "Remote [%s] applied successfully! Keymaps reloaded.") % "Backup")
+
+    def _restore_factory_conf(self, title: str) -> None:
+        """Restore original factory remote.conf from .factory backup."""
+        factory_conf = os.path.join(self.flash_dir, "remote.conf.factory")
+        flash_conf = os.path.join(self.flash_dir, "remote.conf")
+        if not os.path.exists(factory_conf):
+            dialog_ok(title, get_string(31416, "No remote configuration backup found."))
+            return
+
+        self._set_flash_writable()
+        try:
+            shutil.copy2(factory_conf, flash_conf)
+            os.remove(factory_conf)
+            info("Restored factory remote.conf successfully")
+        finally:
+            self._set_flash_readonly()
+
+        reboot_prompt = get_string(31420, "Factory IR remote configuration restored successfully! Reboot now?")
+        if dialog_yesno(title, reboot_prompt):
+            self._do_reboot()
 
     def _apply_config(self, title: str, remote_info: dict) -> None:
         source_dir = os.path.join(self.remotes_data_dir, remote_info["id"])
@@ -249,10 +286,10 @@ class RemoteAdapterTool(BaseTool):
                         except Exception:
                             pass
 
-            # 2. Clean previous hwdb files
+            # 2. Clean previous remote_adapter hwdb files (never touch user custom hwdb)
             if os.path.exists(self.hwdb_dir):
                 for f in os.listdir(self.hwdb_dir):
-                    if f.endswith(".hwdb"):
+                    if (f.startswith("remote_adapter_") or f in KNOWN_HWDB_NAMES) and f.endswith(".hwdb"):
                         try:
                             os.remove(os.path.join(self.hwdb_dir, f))
                             need_reboot = True
@@ -275,7 +312,7 @@ class RemoteAdapterTool(BaseTool):
                 except Exception as e:
                     failed_ops.append(f"Protect remote.conf failed: {e}")
 
-            # 4. Copy new files
+            # 4. Copy new files (xml, hwdb, conf)
             for filename in files:
                 src_path = os.path.join(source_dir, filename)
 
@@ -286,7 +323,8 @@ class RemoteAdapterTool(BaseTool):
                     shutil.copy2(src_path, dst_path)
 
                 elif filename.endswith(".hwdb"):
-                    dst_path = os.path.join(self.hwdb_dir, filename)
+                    safe_name = filename if filename.startswith("remote_adapter_") else f"remote_adapter_{filename}"
+                    dst_path = os.path.join(self.hwdb_dir, safe_name)
                     shutil.copy2(src_path, dst_path)
                     need_reboot = True
 
