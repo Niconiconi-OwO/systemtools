@@ -14,6 +14,11 @@ import tarfile
 import time
 from typing import Dict, List, Optional, Tuple
 
+try:
+    import ctypes
+except ImportError:
+    ctypes = None
+
 from ..common.kodi_ui import (
     dialog_browse,
     dialog_input,
@@ -593,7 +598,46 @@ fi
                 shutil.copy2(self.gui_settings_current, os.path.join(active_dir, "guisettings.xml"))
 
     def _do_reboot(self) -> None:
-        """Execute fast sync & reboot -f."""
-        info("Syncing filesystems and executing reboot -f")
+        """Execute clean sync and hardware reboot for version switching."""
+        info("Syncing filesystems and executing reboot")
+        try:
+            os.sync()
+        except Exception:
+            pass
         run_command("sync")
-        run_command("reboot -f")
+
+        # Ensure /flash partition is safely remounted ro before hardware reset
+        self._set_flash_readonly()
+
+        # Method 1: Kernel Magic SysRq emergency reboot sequence (Sync -> Remount-RO -> Reboot)
+        try:
+            with open("/proc/sys/kernel/sysrq", "w") as f:
+                f.write("1\n")
+            with open("/proc/sysrq-trigger", "w") as f:
+                f.write("s\n")
+            time.sleep(0.5)
+            with open("/proc/sysrq-trigger", "w") as f:
+                f.write("u\n")
+            time.sleep(0.5)
+            with open("/proc/sysrq-trigger", "w") as f:
+                f.write("b\n")
+            time.sleep(2)
+        except Exception as e:
+            debug(f"SysRq reboot failed or not supported: {e}")
+
+        # Method 2: libc direct reboot syscall (LINUX_REBOOT_CMD_RESTART = 0x01234567)
+        if ctypes is not None:
+            try:
+                libc = ctypes.CDLL(None)
+                if hasattr(libc, "reboot"):
+                    if hasattr(libc, "sync"):
+                        libc.sync()
+                    libc.reboot(0x01234567)
+                    time.sleep(2)
+            except Exception as e:
+                debug(f"libc reboot syscall failed: {e}")
+
+        # Method 3: Standard external reboot commands as fallback
+        code, _, _ = run_command("reboot -f")
+        if code != 0:
+            run_command("reboot")

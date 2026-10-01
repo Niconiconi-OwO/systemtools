@@ -330,3 +330,58 @@ def test_os_switcher_tar_import_cancel_menu(tmp_path):
     mock_browse.assert_not_called()
 
 
+def test_os_switcher_do_reboot_sysrq(tmp_path):
+    tool = OsSwitcherTool(flash_dir=str(tmp_path / "flash"), versions_dir=str(tmp_path / "versions"))
+    written_data = {}
+
+    class MockFile:
+        def __init__(self, path):
+            self.path = path
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def write(self, data):
+            written_data.setdefault(self.path, []).append(data)
+
+    original_open = open
+
+    def mock_open_func(file, mode="r", *args, **kwargs):
+        if "sysrq" in str(file):
+            return MockFile(str(file))
+        return original_open(file, mode, *args, **kwargs)
+
+    with patch("builtins.open", side_effect=mock_open_func), \
+         patch.object(tool, "_set_flash_readonly") as mock_set_ro, \
+         patch("resources.lib.tools.os_switcher.run_command", return_value=(0, "", "")) as mock_run_cmd, \
+         patch("time.sleep"):
+        tool._do_reboot()
+
+    mock_set_ro.assert_called_once()
+    assert "/proc/sys/kernel/sysrq" in written_data
+    assert written_data["/proc/sys/kernel/sysrq"] == ["1\n"]
+    assert "/proc/sysrq-trigger" in written_data
+    assert written_data["/proc/sysrq-trigger"] == ["s\n", "u\n", "b\n"]
+
+
+def test_os_switcher_do_reboot_fallback_to_cmd(tmp_path):
+    tool = OsSwitcherTool(flash_dir=str(tmp_path / "flash"), versions_dir=str(tmp_path / "versions"))
+
+    with patch("builtins.open", side_effect=OSError("No sysrq")), \
+         patch.object(tool, "_set_flash_readonly") as mock_set_ro, \
+         patch("resources.lib.tools.os_switcher.ctypes", None), \
+         patch("resources.lib.tools.os_switcher.run_command", return_value=(0, "", "")) as mock_run_cmd, \
+         patch("time.sleep"):
+        tool._do_reboot()
+
+    mock_set_ro.assert_called_once()
+    # run_command called for sync and reboot -f
+    cmd_calls = [c[0][0] for c in mock_run_cmd.call_args_list]
+    assert "sync" in cmd_calls
+    assert "reboot -f" in cmd_calls
+
+
+

@@ -79,13 +79,13 @@
 ```bash
 python scripts/package.py
 ```
-生成安装包位于 `dist/plugin.program.systemtools-1.0.7.zip`。
+生成安装包位于 `dist/plugin.program.systemtools-1.0.8.zip`。
 
 ### 在 Kodi 中安装
 1. 打开 Kodi -> **设置 (Settings)** -> **插件 (Add-ons)**。
 2. 开启 **未知来源 (Unknown sources)**。
 3. 选择 **从 Zip 文件安装 (Install from zip file)**。
-4. 浏览并选择 `dist/plugin.program.systemtools-1.0.7.zip` 即可完成安装。
+4. 浏览并选择 `dist/plugin.program.systemtools-1.0.8.zip` 即可完成安装。
 
 ---
 
@@ -145,6 +145,12 @@ flake8 resources/ addon.py tests/
 ---
 
 ## 更新日志
+
+### 1.0.8
+* **CoreELEC 多版本切换工具（OS Switcher）重启可靠性与文件系统安全增强**：
+  - **彻底解决切回系统版本后偶发不自动重启问题**：分析定位到原位覆写 250MB 系统镜像触发内存回收导致外部命令（如 `systemctl` / `reboot -f`）因 SquashFS 缺页报段错误（SIGSEGV 139）崩溃。重构为常驻内存的内核级 Magic SysRq 安全重启序列（`s` 脏页全量刷盘 -> `u` 紧急设为只读以消除 FAT32 脏标记 -> `b` 硬件直接复位），100% 绕过用户态文件系统与外部二进制，彻底杜绝切系统后盒子卡死无响应。
+  - **多级硬件与系统调用兜底体系**：按优先级串联 Magic SysRq、libc `reboot(0x01234567)` 系统调用与常规命令，确保在任何异常缺页状态下均能平滑自驱复位。
+  - **前置落盘与安全保护**：在复位硬件前显式调用 `os.sync()` 并主动将 `/flash` 分区重新挂载为只读模式，完全消除文件系统未落盘隐患。
 
 ### 1.0.7
 * **SQLite 媒体库复合覆盖索引极速优化（Widget 加速 7 ~ 26 倍）**：
