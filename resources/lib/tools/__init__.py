@@ -11,6 +11,8 @@ from .net_config import NetConfigTool
 from .net_speedtest import NetSpeedtestTool
 from .os_switcher import OsSwitcherTool
 from .ram_cleaner import RamCleanerTool
+from .remote_adapter import RemoteAdapterTool
+from .auto_reboot import AutoRebootTool
 
 __all__ = [
     "BaseTool",
@@ -26,5 +28,7 @@ __all__ = [
     "LogCleanerTool",
     "is_dtb_protected",
     "set_dtb_protection",
+    "RemoteAdapterTool",
+    "AutoRebootTool"
 ]
 

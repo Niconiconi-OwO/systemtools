@@ -1616,4 +1616,18 @@ msgctxt "#31160"
 msgid "Unconfigured"
 msgstr "未配置"
 
+msgctxt "#31408"
+msgid "Select Remote"
+msgstr "选择适配的遥控器"
 
+msgctxt "#31409"
+msgid "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+msgstr "为 CoreELEC 系统一键适配各种红外/蓝牙/2.4G遥控器"
+
+msgctxt "#31500"
+msgid "Daily Auto Reboot"
+msgstr "每日自动重启"
+
+msgctxt "#31501"
+msgid "Set up a systemd timer to reboot CoreELEC daily"
+msgstr "设置系统定时器，让 CoreELEC 每天自动重启释放内存"

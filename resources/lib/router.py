@@ -191,6 +191,8 @@ def show_about_info() -> None:
         f"  7. {get_string(30003, 'Disk Benchmark')}",
         f"  8. {get_string(30004, 'Network Configuration')}",
         f"  9. {get_string(30005, 'Clear Kodi Logs')}",
+        f"  10. {get_string(31408, 'Remote Control Auto-Adapter')}",
+        f"  11. {get_string(31500, 'Daily Auto Reboot')}",
     ]
     dialog_textviewer(get_string(30006, "System Information"), "\n".join(info_lines))
 

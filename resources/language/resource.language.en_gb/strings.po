@@ -1616,4 +1616,19 @@ msgctxt "#31160"
 msgid "Unconfigured"
 msgstr "Unconfigured"
 
+msgctxt "#31408"
+msgid "Select Remote"
+msgstr "Select Remote"
+
+msgctxt "#31409"
+msgid "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+msgstr "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+
+msgctxt "#31500"
+msgid "Daily Auto Reboot"
+msgstr "Daily Auto Reboot"
+
+msgctxt "#31501"
+msgid "Set up a systemd timer to reboot CoreELEC daily"
+msgstr "Set up a systemd timer to reboot CoreELEC daily"
 
