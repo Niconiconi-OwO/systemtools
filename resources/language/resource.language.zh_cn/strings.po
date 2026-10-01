@@ -1616,4 +1616,97 @@ msgctxt "#31160"
 msgid "Unconfigured"
 msgstr "未配置"
 
+msgctxt "#31408"
+msgid "Remote Control Auto-Adapter"
+msgstr "遥控器适配工具"
+
+msgctxt "#31409"
+msgid "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+msgstr "为 CoreELEC 系统适配各种红外/蓝牙/2.4G遥控器"
+
+msgctxt "#31410"
+msgid "Select Remote to Adapt"
+msgstr "请选择需要适配的遥控器"
+
+msgctxt "#31411"
+msgid "Restore Previous Remote Backup"
+msgstr "★ 还原上一次的遥控器配置备份"
+
+msgctxt "#31412"
+msgid "This feature is only supported on CoreELEC systems."
+msgstr "未检测到 CoreELEC 环境，此工具仅适用于 CoreELEC！"
+
+msgctxt "#31413"
+msgid "About to adapt remote: [%s]\nExisting configuration will be backed up automatically.\nContinue?"
+msgstr "即将为系统适配：[%s]\n旧配置将被自动安全备份。\n是否继续应用此配置？"
+
+msgctxt "#31414"
+msgid "Remote [%s] applied successfully! Keymaps reloaded."
+msgstr "【%s】配置已成功应用并实时生效！"
+
+msgctxt "#31415"
+msgid "Hardware driver changes detected for [%s]. A reboot is required to take effect.\nReboot now?"
+msgstr "【%s】底层硬件驱动已写入完成！\n检测到底层配置变更，必须重启才能生效。\n是否立即重启设备？"
+
+msgctxt "#31416"
+msgid "No remote configuration backup found."
+msgstr "未找到可用的遥控器配置备份。"
+
+msgctxt "#31417"
+msgid "Previous remote backup restored successfully! Reboot now?"
+msgstr "遥控器配置备份已成功还原！是否立即重启设备生效？"
+
+msgctxt "#31418"
+msgid "Failed to apply remote configuration: %s"
+msgstr "遥控器适配执行失败：%s"
+
+msgctxt "#31500"
+msgid "Daily Auto Reboot"
+msgstr "每日自动重启"
+
+msgctxt "#31501"
+msgid "Set up a systemd timer to reboot CoreELEC daily"
+msgstr "设置系统定时器，让 CoreELEC 每天自动重启释放内存"
+
+msgctxt "#31502"
+msgid "Daily Auto Reboot - Status: %s"
+msgstr "每日自动重启 - 当前状态：%s"
+
+msgctxt "#31503"
+msgid "Enabled (Daily at %s)"
+msgstr "已开启 (每天 %s)"
+
+msgctxt "#31504"
+msgid "Disabled"
+msgstr "未开启"
+
+msgctxt "#31505"
+msgid "1. Set / Change Auto Reboot Time"
+msgstr "1. 设置 / 修改 自动重启时间"
+
+msgctxt "#31506"
+msgid "2. Disable Daily Auto Reboot"
+msgstr "2. 关闭 每日自动重启"
+
+msgctxt "#31507"
+msgid "Set daily auto reboot time:"
+msgstr "请设置每天自动重启的时间："
+
+msgctxt "#31508"
+msgid "Auto reboot configured! System will reboot daily at %s.\n(Loop protection enabled)"
+msgstr "设置成功！系统将在每天 %s 自动执行重启。\n(已开启防死循环保护)"
+
+msgctxt "#31509"
+msgid "Daily auto reboot disabled successfully."
+msgstr "已成功关闭每日自动重启功能。"
+
+msgctxt "#31510"
+msgid "Daily auto reboot is not enabled currently."
+msgstr "当前未开启自动重启，无需关闭。"
+
+msgctxt "#31511"
+msgid "Failed to configure auto reboot: %s"
+msgstr "自动重启设置失败：%s"
+
+
 

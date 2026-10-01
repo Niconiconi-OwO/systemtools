@@ -132,6 +132,14 @@ def dialog_input(title, default=""):
     return default
 
 
+def dialog_numeric(type_code, heading, default=""):
+    """Show numeric or time dialog (type_code: 0=standard, 1=date, 2=time, 3=ip)."""
+    if _HAS_XBMC and xbmcgui:
+        dialog = xbmcgui.Dialog()
+        return dialog.numeric(type_code, heading, default)
+    return default
+
+
 def dialog_browse(type_code, heading, shares="", mask="", use_thumbs=False, treat_as_folder=False, default_path=""):
     """Show file / folder browser dialog."""
     if _HAS_XBMC and xbmcgui:

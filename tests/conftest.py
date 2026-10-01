@@ -87,6 +87,7 @@ if "xbmcgui" not in sys.modules:
     dialog_instance.yesno.return_value = True
     dialog_instance.select.return_value = 0
     dialog_instance.input.return_value = "192.168.1.100"
+    dialog_instance.numeric.return_value = "04:00"
     dialog_instance.browse.side_effect = lambda t, h, s, m="", u=False, f=False, default="": default
     dialog_instance.browseSingle.side_effect = lambda t, h, s="", m="", u=False, f=False, default="": default
     mock_xbmcgui.Dialog.return_value = dialog_instance

@@ -33,3 +33,16 @@ def test_dialog_select_details_fallback_on_type_error():
 
         idx = dialog_select_details("Select Tool", items)
         assert idx == 0
+
+
+def test_dialog_numeric():
+    from resources.lib.common.kodi_ui import dialog_numeric
+    with patch("xbmcgui.Dialog") as mock_dialog_cls:
+        mock_dialog = MagicMock()
+        mock_dialog.numeric.return_value = "04:30"
+        mock_dialog_cls.return_value = mock_dialog
+
+        val = dialog_numeric(2, "Set Time", default="04:00")
+        assert val == "04:30"
+        mock_dialog.numeric.assert_called_once_with(2, "Set Time", "04:00")
+

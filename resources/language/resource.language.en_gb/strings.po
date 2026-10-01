@@ -1616,4 +1616,97 @@ msgctxt "#31160"
 msgid "Unconfigured"
 msgstr "Unconfigured"
 
+msgctxt "#31408"
+msgid "Remote Control Auto-Adapter"
+msgstr "Remote Control Auto-Adapter"
+
+msgctxt "#31409"
+msgid "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+msgstr "Adapt various IR/Bluetooth/2.4G remotes for CoreELEC"
+
+msgctxt "#31410"
+msgid "Select Remote to Adapt"
+msgstr "Select Remote to Adapt"
+
+msgctxt "#31411"
+msgid "Restore Previous Remote Backup"
+msgstr "Restore Previous Remote Backup"
+
+msgctxt "#31412"
+msgid "This feature is only supported on CoreELEC systems."
+msgstr "This feature is only supported on CoreELEC systems."
+
+msgctxt "#31413"
+msgid "About to adapt remote: [%s]\nExisting configuration will be backed up automatically.\nContinue?"
+msgstr "About to adapt remote: [%s]\nExisting configuration will be backed up automatically.\nContinue?"
+
+msgctxt "#31414"
+msgid "Remote [%s] applied successfully! Keymaps reloaded."
+msgstr "Remote [%s] applied successfully! Keymaps reloaded."
+
+msgctxt "#31415"
+msgid "Hardware driver changes detected for [%s]. A reboot is required to take effect.\nReboot now?"
+msgstr "Hardware driver changes detected for [%s]. A reboot is required to take effect.\nReboot now?"
+
+msgctxt "#31416"
+msgid "No remote configuration backup found."
+msgstr "No remote configuration backup found."
+
+msgctxt "#31417"
+msgid "Previous remote backup restored successfully! Reboot now?"
+msgstr "Previous remote backup restored successfully! Reboot now?"
+
+msgctxt "#31418"
+msgid "Failed to apply remote configuration: %s"
+msgstr "Failed to apply remote configuration: %s"
+
+msgctxt "#31500"
+msgid "Daily Auto Reboot"
+msgstr "Daily Auto Reboot"
+
+msgctxt "#31501"
+msgid "Set up a systemd timer to reboot CoreELEC daily"
+msgstr "Set up a systemd timer to reboot CoreELEC daily"
+
+msgctxt "#31502"
+msgid "Daily Auto Reboot - Status: %s"
+msgstr "Daily Auto Reboot - Status: %s"
+
+msgctxt "#31503"
+msgid "Enabled (Daily at %s)"
+msgstr "Enabled (Daily at %s)"
+
+msgctxt "#31504"
+msgid "Disabled"
+msgstr "Disabled"
+
+msgctxt "#31505"
+msgid "1. Set / Change Auto Reboot Time"
+msgstr "1. Set / Change Auto Reboot Time"
+
+msgctxt "#31506"
+msgid "2. Disable Daily Auto Reboot"
+msgstr "2. Disable Daily Auto Reboot"
+
+msgctxt "#31507"
+msgid "Set daily auto reboot time:"
+msgstr "Set daily auto reboot time:"
+
+msgctxt "#31508"
+msgid "Auto reboot configured! System will reboot daily at %s.\n(Loop protection enabled)"
+msgstr "Auto reboot configured! System will reboot daily at %s.\n(Loop protection enabled)"
+
+msgctxt "#31509"
+msgid "Daily auto reboot disabled successfully."
+msgstr "Daily auto reboot disabled successfully."
+
+msgctxt "#31510"
+msgid "Daily auto reboot is not enabled currently."
+msgstr "Daily auto reboot is not enabled currently."
+
+msgctxt "#31511"
+msgid "Failed to configure auto reboot: %s"
+msgstr "Failed to configure auto reboot: %s"
+
+
 
