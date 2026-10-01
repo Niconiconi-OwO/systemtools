@@ -30,6 +30,13 @@ from ..common.kodi_ui import (
 from ..common.logger import debug, error, info
 from ..common.os_detect import OSType, get_system_info
 from ..common.system_exec import run_command
+from ..common.vfs_utils import (
+    get_filename_from_path,
+    open_tar_archive,
+    vfs_delete_file,
+    vfs_file_exists,
+    vfs_file_size,
+)
 from .base_tool import BaseTool, ToolRegistry
 from .dtb_tool import is_dtb_protected
 
@@ -312,14 +319,63 @@ fi
 
     # ------------------ Action 2: Import from TAR ------------------
     def _action_import_tar(self, title: str) -> None:
-        """Import CoreELEC version from .tar update package."""
-        default_browse = os.path.join(self.storage_dir, ".update") if os.path.exists(os.path.join(self.storage_dir, ".update")) else translate_path("special://home/")
-        tar_path = dialog_browse(1, get_string(30126, "Select CoreELEC .tar update package"), "files", ".tar", False, False, default_browse)
+        """Import CoreELEC version from .tar update package (local or SMB/NFS share)."""
+        update_dir = os.path.join(self.storage_dir, ".update")
+        local_tars = []
+        if os.path.isdir(update_dir):
+            try:
+                local_tars = [
+                    os.path.join(update_dir, f)
+                    for f in os.listdir(update_dir)
+                    if f.lower().endswith(".tar") and os.path.isfile(os.path.join(update_dir, f))
+                ]
+            except Exception:
+                pass
 
-        if not tar_path or not os.path.isfile(tar_path):
+        menu_items = []
+        actions = []
+
+        for lt in local_tars:
+            fname = os.path.basename(lt)
+            menu_items.append(f"★ [{get_string(30145, 'Quick Import')}] {fname}")
+            actions.append(("quick", lt))
+
+        menu_items.append(get_string(30143, "Browse Files (SMB / NFS / Local / USB)..."))
+        actions.append(("browse", None))
+
+        menu_items.append(get_string(30144, "Enter Network / Local Path manually..."))
+        actions.append(("input", None))
+
+        idx = dialog_select(get_string(30126, "Select CoreELEC .tar update package"), menu_items)
+        if idx < 0:
             return
 
-        base_filename = os.path.basename(tar_path)
+        action_type, action_val = actions[idx]
+        tar_path = ""
+        if action_type == "quick":
+            tar_path = action_val
+        elif action_type == "browse":
+            # shares="" exposes both local storage and network shares (SMB, NFS, etc.)
+            # default_path="" starts at the root shares list so Windows Network (SMB) and Add network location are visible
+            tar_path = dialog_browse(
+                1,
+                get_string(30126, "Select CoreELEC .tar update package"),
+                shares="",
+                mask=".tar",
+                use_thumbs=False,
+                treat_as_folder=False,
+                default_path="",
+            )
+        elif action_type == "input":
+            tar_path = dialog_input(get_string(30144, "Enter Network / Local Path manually:"), default="smb://")
+
+        if not tar_path:
+            return
+        if not vfs_file_exists(tar_path):
+            dialog_ok(title, get_string(30140, "Failed to extract tar: %s") % f"File not accessible: {tar_path}")
+            return
+
+        base_filename = get_filename_from_path(tar_path)
         safe_name, display_suggested, build_time = parse_tar_version_info(base_filename)
 
         ver_name = dialog_input(get_string(30117, "Enter Version Name:"), default=display_suggested)
@@ -337,7 +393,7 @@ fi
             with progress_dialog(title, get_string(30118, "Extracting tar package...")) as dp:
                 dp.update(10, f"Inspecting archive: {base_filename}")
 
-                with tarfile.open(tar_path, "r:*") as tar:
+                with open_tar_archive(tar_path) as tar:
                     members = tar.getmembers()
                     total_members = len(members)
 
@@ -382,13 +438,15 @@ fi
             info(f"Successfully imported version [{ver_name}] into {dest_vdir}")
 
             # Option to delete the original source .tar file to free up storage space
-            tar_size_mb = os.path.getsize(tar_path) / (1024 * 1024) if os.path.exists(tar_path) else 0.0
+            tar_size_bytes = vfs_file_size(tar_path)
+            tar_size_mb = tar_size_bytes / (1024 * 1024)
             auto_delete = get_setting_bool("auto_delete_tar_after_import", False)
             del_prompt = get_string(30128, "Version [%s] imported successfully!\nDo you want to delete the source .tar package (%s MB) to free up storage?") % (ver_name, f"{tar_size_mb:.1f}")
 
             if auto_delete or dialog_yesno(title, del_prompt):
                 try:
-                    os.remove(tar_path)
+                    if not vfs_delete_file(tar_path):
+                        raise OSError("Delete failed (permission denied or read-only share)")
                     info(f"Deleted source tar package: {tar_path} ({tar_size_mb:.1f} MB freed)")
                     show_notification(title, get_string(30129, "Source .tar package deleted (%s MB freed).") % f"{tar_size_mb:.1f}")
                 except Exception as e:

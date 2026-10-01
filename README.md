@@ -79,13 +79,13 @@
 ```bash
 python scripts/package.py
 ```
-生成安装包位于 `dist/plugin.program.systemtools-1.0.4.zip`。
+生成安装包位于 `dist/plugin.program.systemtools-1.0.5.zip`。
 
 ### 在 Kodi 中安装
 1. 打开 Kodi -> **设置 (Settings)** -> **插件 (Add-ons)**。
 2. 开启 **未知来源 (Unknown sources)**。
 3. 选择 **从 Zip 文件安装 (Install from zip file)**。
-4. 浏览并选择 `dist/plugin.program.systemtools-1.0.4.zip` 即可完成安装。
+4. 浏览并选择 `dist/plugin.program.systemtools-1.0.5.zip` 即可完成安装。
 
 ---
 
@@ -145,6 +145,21 @@ flake8 resources/ addon.py tests/
 ---
 
 ## 更新日志
+
+### 1.0.6
+* **SQLite 媒体数据库 WAL 维护增强与一键日常瘦身**：
+  - 新增“快速清理与收缩 WAL 日志”动作，使用 `PRAGMA wal_checkpoint(TRUNCATE)` 在线回写脏数据并将 WAL 物理文件截断归零，秒级完成且无需重启 Kodi。
+  - 增加长事务读写锁冲突保护机制，遇到锁争用时自动优雅降级为 `PASSIVE` 模式，绝不阻塞卡死 Kodi UI。
+  - 优化状态报告全面增强，直观展示各数据库主库体积与 WAL 体积，WAL 积压超过 16MB 阈值时自动给出预警提示。
+* **优化与固件设置备份还原逻辑彻底修复与安全加固**：
+  - 还原数据库时自动扫描并同步清理残留的 `.db-wal` 和 `.db-shm` 文件，彻底解决覆盖主库后旧 WAL 校验冲突导致 SQLite 报 `disk I/O error` 或文件损坏的严重隐患。
+  - 在性能优化工具与 R10/F10 固件高级设置中同步引入缺席哨兵机制（`.not_exist`），彻底解决设备初始不存在 `advancedsettings.xml` 时修改配置后无法一键还原回无配置文件状态的缺陷。
+
+### 1.0.5
+* **存储测速全面对标 FIO 工业标准**：重构存储读写测试引擎，全面对标 FIO / CrystalDiskMark Q1T1 标准测试模型。
+* **4K 随机读写页对齐直读直写**：引入 `mmap` 物理页对齐缓冲区与 `O_DIRECT`（直写闪存）及 `os.readv`（直读闪存），彻底解决写入数据被操作系统 PageCache 内存缓冲拦截导致写速度严重虚高的问题，测速结果与实机运行 FIO 3.37 误差在个位数百分比以内。
+* **4K 自适应超时收敛机制**：增加单次测试 3.0s 耗时自动收敛机制，防止在低速 U 盘 / TF 卡测试时 Kodi 界面冻结卡死。
+* **顺序写入动态指纹与全流程闭环落盘**：顺序写入动态注入数据块序号扰动，防止主控压缩与去重作弊，并加入全系统 `sync` 闭环计时。
 
 ### 1.0.4
 * **新增 R10/F10 固件高级设置**：全面集成 Amlogic SoC 晶晨硬件解码注入、ALSA 音频驱动抗爆音、Mali GPU 局部脏区重绘管线、蓝光无缝分段排空等定制固件核心参数调优。

@@ -259,6 +259,18 @@ msgctxt "#30142"
 msgid "Backup failed: %s"
 msgstr "Backup failed: %s"
 
+msgctxt "#30143"
+msgid "Browse Files (SMB / NFS / Local / USB)..."
+msgstr "Browse Files (SMB / NFS / Local / USB)..."
+
+msgctxt "#30144"
+msgid "Enter Network / Local Path manually..."
+msgstr "Enter Network / Local Path manually..."
+
+msgctxt "#30145"
+msgid "Quick Import"
+msgstr "Quick Import"
+
 # 30200 - 30249: Network Speed Test
 msgctxt "#30201"
 msgid "Testing latency..."
@@ -942,6 +954,46 @@ msgstr "Optimizing %s (WAL concurrent mode)..."
 msgctxt "#30926"
 msgid "Performance optimization completed!"
 msgstr "Performance optimization completed!"
+
+msgctxt "#30930"
+msgid "Flush Database WALs (Fast Slimming, No Reboot)"
+msgstr "Flush Database WALs (Fast Slimming, No Reboot)"
+
+msgctxt "#30931"
+msgid "Flushed %d databases successfully (%s freed)."
+msgstr "Flushed %d databases successfully (%s freed)."
+
+msgctxt "#30932"
+msgid "Flushing %s WAL logs..."
+msgstr "Flushing %s WAL logs..."
+
+msgctxt "#30933"
+msgid "WAL Backlog (Slimming Recommended)"
+msgstr "WAL Backlog (Slimming Recommended)"
+
+msgctxt "#30934"
+msgid "Optimizing %s (Covering indexes, Vacuum & Analyze)..."
+msgstr "Optimizing %s (Covering indexes, Vacuum & Analyze)..."
+
+msgctxt "#30935"
+msgid "Revert Custom Indexes (Lossless, Keeps Watch History)"
+msgstr "Revert Custom Indexes (Lossless, Keeps Watch History)"
+
+msgctxt "#30936"
+msgid "Reverted %d custom indexes across %d databases."
+msgstr "Reverted %d custom indexes across %d databases."
+
+msgctxt "#30937"
+msgid "Are you sure you want to revert all custom indexes? Your library data will remain intact."
+msgstr "Are you sure you want to revert all custom indexes? Your library data will remain intact."
+
+msgctxt "#30938"
+msgid "Indexes: Active"
+msgstr "Indexes: Active"
+
+msgctxt "#30939"
+msgid "No custom indexes found to revert."
+msgstr "No custom indexes found to revert."
 
 msgctxt "#30020"
 msgid "Unknown Action: %s"

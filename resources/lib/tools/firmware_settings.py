@@ -549,35 +549,61 @@ class FirmwareXmlEngine:
         self.userdata_path = userdata_path if userdata_path else get_default_userdata_dir()
         self.xml_path = os.path.join(self.userdata_path, "advancedsettings.xml")
         self.bak_path = f"{self.xml_path}.bak"
+        self.not_exist_path = f"{self.xml_path}.not_exist"
 
     def get_xml_path(self) -> str:
         return self.xml_path
 
     def has_backup(self) -> bool:
-        return os.path.exists(self.bak_path)
+        return os.path.exists(self.bak_path) or os.path.exists(self.not_exist_path)
 
     def backup_config(self) -> Optional[str]:
-        """Create a .bak copy of advancedsettings.xml if it exists and no .bak yet."""
-        if os.path.exists(self.xml_path) and not os.path.exists(self.bak_path):
-            try:
-                shutil.copy2(self.xml_path, self.bak_path)
-                info(f"Created advancedsettings backup: {self.bak_path}")
-                return self.bak_path
-            except Exception as e:
-                error(f"Failed to create backup: {e}")
+        """Create a .bak copy of advancedsettings.xml if it exists, or record .not_exist if absent."""
+        if os.path.exists(self.xml_path):
+            if not os.path.exists(self.bak_path):
+                try:
+                    shutil.copy2(self.xml_path, self.bak_path)
+                    info(f"Created advancedsettings backup: {self.bak_path}")
+                    return self.bak_path
+                except Exception as e:
+                    error(f"Failed to create backup: {e}")
+            if os.path.exists(self.not_exist_path):
+                try:
+                    os.remove(self.not_exist_path)
+                except Exception:
+                    pass
+        else:
+            if not os.path.exists(self.bak_path) and not os.path.exists(self.not_exist_path):
+                try:
+                    with open(self.not_exist_path, "w", encoding="utf-8") as f:
+                        f.write("")
+                    info(f"Recorded pre-modification absent state: {self.not_exist_path}")
+                    return self.not_exist_path
+                except Exception as e:
+                    error(f"Failed to write marker {self.not_exist_path}: {e}")
         return None
 
     def restore_backup(self) -> bool:
-        """Restore advancedsettings.xml from .bak backup."""
-        if not os.path.exists(self.bak_path):
-            return False
-        try:
-            shutil.copy2(self.bak_path, self.xml_path)
-            info(f"Restored advancedsettings from: {self.bak_path}")
-            return True
-        except Exception as e:
-            error(f"Failed to restore backup: {e}")
-            return False
+        """Restore advancedsettings.xml from .bak backup or revert to absent state."""
+        if os.path.exists(self.bak_path):
+            try:
+                shutil.copy2(self.bak_path, self.xml_path)
+                info(f"Restored advancedsettings from: {self.bak_path}")
+                return True
+            except Exception as e:
+                error(f"Failed to restore backup: {e}")
+                return False
+        elif os.path.exists(self.not_exist_path):
+            try:
+                if os.path.exists(self.xml_path):
+                    os.remove(self.xml_path)
+                    info(f"Removed {self.xml_path} to restore pre-modification absent state")
+                os.remove(self.not_exist_path)
+                return True
+            except Exception as e:
+                error(f"Failed to restore absent state for {self.xml_path}: {e}")
+                return False
+        return False
 
     def _get_tree_and_root(self) -> Tuple[Optional[ET.ElementTree], ET.Element]:
         """Parse existing XML file or initialize a fresh root element."""

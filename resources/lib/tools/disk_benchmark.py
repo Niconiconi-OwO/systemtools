@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tool: Disk Storage Benchmark (Sequential & 4K Random Read/Write with IOPS)."""
 
+import mmap
 import os
 import random
 import time
@@ -56,6 +57,12 @@ class DiskBenchmarkTool(BaseTool):
 
         try:
             with progress_dialog(title, get_string(30303, "Testing Sequential Write...")) as dp:
+                # Pre-flush OS pagecache before benchmark starts
+                dp.update(2, get_string(30319, "Flushing OS cache to measure true physical read speed..."))
+                self._flush_and_evict_cache(target_filepath)
+                if dp.is_canceled():
+                    return
+
                 # Step 1: Sequential Write
                 dp.update(5, get_string(30303, "Testing Sequential Write..."))
                 seq_write_mbs = self._test_sequential_write(target_filepath, test_size_mb, dp)
@@ -148,40 +155,73 @@ class DiskBenchmarkTool(BaseTool):
         return None
 
     def _test_sequential_write(self, filepath: str, size_mb: int, dp) -> float:
-        """Write test file sequentially in 1MB chunks with fsync."""
+        """Write test file sequentially in 1MB chunks with direct I/O (matching FIO standard)."""
         block_size = 1024 * 1024  # 1 MB
         total_blocks = size_mb
-        # Generate non-repetitive pseudorandom block buffer to avoid compression/zero-fill bypass
-        random_bytes = bytearray(os.urandom(64 * 1024) * 16)
+        random_bytes = bytearray(os.urandom(block_size))
 
+        buf = None
+        use_direct = False
+        if hasattr(os, "O_DIRECT") and hasattr(mmap, "mmap"):
+            try:
+                buf = mmap.mmap(-1, block_size)
+                buf.write(random_bytes)
+                fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_DIRECT | O_BINARY)
+                use_direct = True
+            except OSError:
+                if buf:
+                    buf.close()
+                    buf = None
+                use_direct = False
+
+        if not use_direct:
+            fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | O_BINARY)
+
+        write_buf = buf if use_direct else random_bytes
         t0 = time.perf_counter()
-        fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | O_BINARY)
+        blocks_written = 0
         try:
             for i in range(total_blocks):
                 if dp.is_canceled():
                     break
-                os.write(fd, random_bytes)
+                write_buf[0] = i & 0xFF
+                write_buf[1] = (i >> 8) & 0xFF
+                write_buf[2] = (i >> 16) & 0xFF
+                write_buf[3] = (i >> 24) & 0xFF
+                os.write(fd, write_buf)
+                blocks_written += 1
                 if (i + 1) % 4 == 0:
-                    pct = 5 + int(((i + 1) / total_blocks) * 25)
+                    pct = 5 + int(((i + 1) / total_blocks) * 20)
                     dp.update(pct, f"Seq Write: {i + 1}/{total_blocks} MB")
             os.fsync(fd)
         finally:
             os.close(fd)
+            if buf:
+                buf.close()
+
+        # Ensure filesystem metadata and dirty blocks are committed
+        if hasattr(os, "sync"):
+            try:
+                os.sync()
+            except Exception:
+                pass
+        else:
+            run_command("sync")
 
         elapsed = max(0.001, time.perf_counter() - t0)
-        return size_mb / elapsed
+        return (blocks_written * block_size / (1024 * 1024)) / elapsed
 
     def _test_sequential_read(self, filepath: str, dp) -> float:
-        """Read test file sequentially in 1MB chunks."""
+        """Read test file sequentially in 1MB chunks with kernel readahead hint."""
         block_size = 1024 * 1024
         file_size = os.path.getsize(filepath)
         size_mb = file_size / (1024 * 1024)
 
         t0 = time.perf_counter()
         fd = os.open(filepath, os.O_RDONLY | O_BINARY)
-        if hasattr(os, "posix_fadvise") and hasattr(os, "POSIX_FADV_DONTNEED"):
+        if hasattr(os, "posix_fadvise") and hasattr(os, "POSIX_FADV_SEQUENTIAL"):
             try:
-                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_SEQUENTIAL)
             except Exception:
                 pass
 
@@ -195,7 +235,7 @@ class DiskBenchmarkTool(BaseTool):
                     break
                 bytes_read += len(data)
                 del data
-                pct = 30 + int((bytes_read / file_size) * 25)
+                pct = 30 + int((bytes_read / file_size) * 20)
                 dp.update(pct, f"Seq Read: {bytes_read / (1024 * 1024):.1f}/{size_mb:.1f} MB")
         finally:
             os.close(fd)
@@ -203,51 +243,103 @@ class DiskBenchmarkTool(BaseTool):
         elapsed = max(0.001, time.perf_counter() - t0)
         return (bytes_read / (1024 * 1024)) / elapsed
 
-    def _test_4k_random_write(self, filepath: str, size_mb: int, dp, ops: int = 1000) -> Tuple[float, float]:
-        """Perform 4KB random writes at aligned offsets, calculating IOPS and throughput."""
+    def _test_4k_random_write(self, filepath: str, size_mb: int, dp, ops: int = 500) -> Tuple[float, float]:
+        """Perform 4KB random writes matching FIO direct=1 standard (Q1T1)."""
         block_size = 4096
         total_blocks = (size_mb * 1024 * 1024) // block_size
         if total_blocks < 1:
             return 0.0, 0.0
 
         random_data = os.urandom(block_size)
-        fd = os.open(filepath, os.O_RDWR | O_BINARY)
+        buf = None
+        use_direct = False
+        use_fdatasync = False
 
+        if hasattr(os, "O_DIRECT") and hasattr(mmap, "mmap"):
+            try:
+                buf = mmap.mmap(-1, block_size)
+                buf.write(random_data)
+                fd = os.open(filepath, os.O_RDWR | os.O_DIRECT | O_BINARY)
+                use_direct = True
+            except OSError:
+                if buf:
+                    buf.close()
+                    buf = None
+                use_direct = False
+
+        if not use_direct:
+            flags = os.O_RDWR | O_BINARY
+            if hasattr(os, "O_DSYNC"):
+                flags |= os.O_DSYNC
+            elif hasattr(os, "O_SYNC"):
+                flags |= os.O_SYNC
+            else:
+                use_fdatasync = True
+            try:
+                fd = os.open(filepath, flags)
+            except OSError:
+                fd = os.open(filepath, os.O_RDWR | O_BINARY)
+                use_fdatasync = True
+
+        write_buf = buf if use_direct else random_data
         t0 = time.perf_counter()
         performed = 0
+        sync_fn = getattr(os, "fdatasync", getattr(os, "fsync", None))
         try:
             for i in range(ops):
                 if dp.is_canceled():
                     break
                 offset = random.randint(0, total_blocks - 1) * block_size
                 os.lseek(fd, offset, os.SEEK_SET)
-                os.write(fd, random_data)
+                os.write(fd, write_buf)
+                if use_fdatasync and sync_fn:
+                    sync_fn(fd)
                 performed += 1
-                if (i + 1) % 50 == 0:
-                    pct = 55 + int(((i + 1) / ops) * 25)
+                if (i + 1) % 25 == 0:
+                    pct = 55 + int(((i + 1) / ops) * 20)
                     dp.update(pct, f"4K Random Write: {i + 1}/{ops} ops")
+                # Adaptive time bound for slow media (e.g. cheap USB flash drive / SD card)
+                if performed >= 100 and (time.perf_counter() - t0) >= 3.0:
+                    break
             os.fsync(fd)
         finally:
             os.close(fd)
+            if buf:
+                buf.close()
 
         elapsed = max(0.001, time.perf_counter() - t0)
         iops = performed / elapsed
         mbs = (performed * block_size / (1024 * 1024)) / elapsed
         return iops, mbs
 
-    def _test_4k_random_read(self, filepath: str, size_mb: int, dp, ops: int = 1000) -> Tuple[float, float]:
-        """Perform 4KB random reads at aligned offsets, calculating IOPS and throughput."""
+    def _test_4k_random_read(self, filepath: str, size_mb: int, dp, ops: int = 500) -> Tuple[float, float]:
+        """Perform 4KB random reads matching FIO direct=1 standard (Q1T1)."""
         block_size = 4096
         total_blocks = (size_mb * 1024 * 1024) // block_size
         if total_blocks < 1:
             return 0.0, 0.0
 
-        fd = os.open(filepath, os.O_RDONLY | O_BINARY)
-        if hasattr(os, "posix_fadvise") and hasattr(os, "POSIX_FADV_DONTNEED"):
+        buf = None
+        use_direct = False
+
+        if hasattr(os, "O_DIRECT") and hasattr(mmap, "mmap") and hasattr(os, "readv"):
             try:
-                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
-            except Exception:
-                pass
+                buf = mmap.mmap(-1, block_size)
+                fd = os.open(filepath, os.O_RDONLY | os.O_DIRECT | O_BINARY)
+                use_direct = True
+            except OSError:
+                if buf:
+                    buf.close()
+                    buf = None
+                use_direct = False
+
+        if not use_direct:
+            fd = os.open(filepath, os.O_RDONLY | O_BINARY)
+            if hasattr(os, "posix_fadvise") and hasattr(os, "POSIX_FADV_RANDOM"):
+                try:
+                    os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_RANDOM)
+                except Exception:
+                    pass
 
         t0 = time.perf_counter()
         performed = 0
@@ -257,16 +349,26 @@ class DiskBenchmarkTool(BaseTool):
                     break
                 offset = random.randint(0, total_blocks - 1) * block_size
                 os.lseek(fd, offset, os.SEEK_SET)
-                data = os.read(fd, block_size)
-                if not data:
-                    break
-                del data
+                if use_direct:
+                    n = os.readv(fd, [buf])
+                    if n <= 0:
+                        break
+                else:
+                    data = os.read(fd, block_size)
+                    if not data:
+                        break
+                    del data
                 performed += 1
-                if (i + 1) % 50 == 0:
+                if (i + 1) % 25 == 0:
                     pct = 80 + int(((i + 1) / ops) * 20)
                     dp.update(pct, f"4K Random Read: {i + 1}/{ops} ops")
+                # Adaptive time bound for slow media
+                if performed >= 100 and (time.perf_counter() - t0) >= 3.0:
+                    break
         finally:
             os.close(fd)
+            if buf:
+                buf.close()
 
         elapsed = max(0.001, time.perf_counter() - t0)
         iops = performed / elapsed
@@ -276,7 +378,13 @@ class DiskBenchmarkTool(BaseTool):
     def _flush_and_evict_cache(self, filepath: str) -> None:
         """Purge OS PageCache and file blocks to ensure raw hardware read speed."""
         # 1. Sync dirty blocks to physical storage
-        run_command("sync")
+        if hasattr(os, "sync"):
+            try:
+                os.sync()
+            except Exception:
+                run_command("sync")
+        else:
+            run_command("sync")
 
         # 2. Tell kernel to drop cached pages of this test file
         if hasattr(os, "posix_fadvise") and hasattr(os, "POSIX_FADV_DONTNEED") and os.path.exists(filepath):

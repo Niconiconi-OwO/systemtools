@@ -235,6 +235,58 @@ def test_firmware_settings_tool_reboot_on_exit(tmp_path):
                 mock_restart.assert_called_once()
 
 
+def test_firmware_xml_engine_restore_when_file_did_not_exist(tmp_path):
+    """Test that engine can restore back to absent state if file did not exist initially."""
+    from resources.lib.tools.firmware_settings import FirmwareXmlEngine
+
+    userdata = str(tmp_path / "userdata")
+    os.makedirs(userdata, exist_ok=True)
+    engine = FirmwareXmlEngine(userdata_path=userdata)
+
+    assert not os.path.exists(engine.get_xml_path())
+    assert not engine.has_backup()
+
+    item = get_setting_by_id("subtitleasyncparse")
+    engine.write_setting_value(item, "true")
+    assert os.path.exists(engine.get_xml_path())
+
+    # When file did not exist initially, has_backup must still be True
+    assert engine.has_backup()
+
+    # Restoring backup should restore absent state (remove xml)
+    success = engine.restore_backup()
+    assert success is True
+    assert not os.path.exists(engine.get_xml_path())
+
+
+def test_firmware_settings_tool_restore_dialog(tmp_path):
+    """Test full UI dialog flow for restoring backup."""
+    from unittest.mock import patch
+    from resources.lib.tools.firmware_settings import FirmwareSettingsTool
+
+    userdata = str(tmp_path / "userdata")
+    tool = FirmwareSettingsTool(userdata_path=userdata)
+
+    # 1. Initially no backup exists
+    assert not tool.engine.has_backup()
+
+    # 2. Write a setting so backup/sentinel is recorded
+    item = get_setting_by_id("subtitleasyncparse")
+    tool.engine.write_setting_value(item, "true")
+    assert tool.engine.has_backup()
+
+    # 3. Trigger restore via dialog
+    # Select restore option (index 7), confirm yesno=True, do not reboot yesno=False
+    with patch("resources.lib.tools.firmware_settings.dialog_select", side_effect=[7, -1]):
+        with patch("resources.lib.tools.firmware_settings.dialog_yesno", side_effect=[True, False]):
+            tool.run({})
+
+    # Verify restored back to pre-modification state
+    assert not os.path.exists(tool.engine.get_xml_path())
+
+
+
+
 
 
 

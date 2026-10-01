@@ -259,6 +259,18 @@ msgctxt "#30142"
 msgid "Backup failed: %s"
 msgstr "系统备份失败：%s"
 
+msgctxt "#30143"
+msgid "Browse Files (SMB / NFS / Local / USB)..."
+msgstr "浏览选择文件（局域网 SMB / NFS / 本地存储 / U盘）..."
+
+msgctxt "#30144"
+msgid "Enter Network / Local Path manually..."
+msgstr "手动输入路径（支持 smb://、nfs://、本地路径）..."
+
+msgctxt "#30145"
+msgid "Quick Import"
+msgstr "快捷导入"
+
 # 30200 - 30249: Network Speed Test
 msgctxt "#30201"
 msgid "Testing latency..."
@@ -942,6 +954,46 @@ msgstr "正在优化 %s (开启 WAL 并发模式)..."
 msgctxt "#30926"
 msgid "Performance optimization completed!"
 msgstr "性能与渲染优化全部完成！"
+
+msgctxt "#30930"
+msgid "Flush Database WALs (Fast Slimming, No Reboot)"
+msgstr "快速清理与收缩 WAL 日志 (日常瘦身，无需重启)"
+
+msgctxt "#30931"
+msgid "Flushed %d databases successfully (%s freed)."
+msgstr "已成功瘦身 %d 个数据库，共释放空间：%s。"
+
+msgctxt "#30932"
+msgid "Flushing %s WAL logs..."
+msgstr "正在回写并收缩 %s 的 WAL 日志..."
+
+msgctxt "#30933"
+msgid "WAL Backlog (Slimming Recommended)"
+msgstr "WAL 积压严重 (建议瘦身)"
+
+msgctxt "#30934"
+msgid "Optimizing %s (Covering indexes, Vacuum & Analyze)..."
+msgstr "正在深度优化 %s (复合覆盖索引、碎片整理与统计分析)..."
+
+msgctxt "#30935"
+msgid "Revert Custom Indexes (Lossless, Keeps Watch History)"
+msgstr "撤销自定义索引加速 (无损撤销，保留所有观看记录)"
+
+msgctxt "#30936"
+msgid "Reverted %d custom indexes across %d databases."
+msgstr "已成功从 %d 个数据库中无损撤销 %d 个自定义索引。"
+
+msgctxt "#30937"
+msgid "Are you sure you want to revert all custom indexes? Your library data will remain intact."
+msgstr "确定要撤销所有自定义优化索引吗？您的所有影视与观看数据将完好保留。"
+
+msgctxt "#30938"
+msgid "Indexes: Active"
+msgstr "索引加速: 已生效"
+
+msgctxt "#30939"
+msgid "No custom indexes found to revert."
+msgstr "未检测到可撤销的自定义索引。"
 
 msgctxt "#30020"
 msgid "Unknown Action: %s"

@@ -132,11 +132,14 @@ def dialog_input(title, default=""):
     return default
 
 
-def dialog_browse(type_code, heading, shares, mask="", use_thumbs=False, treat_as_folder=False, default_path=""):
+def dialog_browse(type_code, heading, shares="", mask="", use_thumbs=False, treat_as_folder=False, default_path=""):
     """Show file / folder browser dialog."""
     if _HAS_XBMC and xbmcgui:
         dialog = xbmcgui.Dialog()
-        # type_code: 0 = ShowAndGetFile, 1 = ShowAndGetFile (multiple), 2 = ShowAndGetFolder, 3 = ShowAndGetWriteableFolder
+        # type_code: 0 = ShowAndGetDirectory, 1 = ShowAndGetFile, 2 = ShowAndGetImage, 3 = ShowAndGetWriteableDirectory
+        # shares: "" exposes both local drives and network shares (SMB, NFS, etc.)
+        if hasattr(dialog, "browseSingle"):
+            return dialog.browseSingle(type_code, heading, shares, mask, use_thumbs, treat_as_folder, default_path)
         return dialog.browse(type_code, heading, shares, mask, use_thumbs, treat_as_folder, default_path)
     return default_path
 

@@ -79,15 +79,117 @@ def get_database_files(db_dir: str) -> List[str]:
     return sorted([f for f in db_files if not f.endswith(".bak")])
 
 
+def format_size(num_bytes: int) -> str:
+    """Format bytes into human-readable string (B, KB, MB, GB)."""
+    if num_bytes < 1024:
+        return f"{num_bytes} B"
+    elif num_bytes < 1024 * 1024:
+        return f"{num_bytes / 1024:.1f} KB"
+    elif num_bytes < 1024 * 1024 * 1024:
+        return f"{num_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{num_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+
+CUSTOM_INDEXES = [
+    (
+        "files",
+        "idx_files_unwatched_recent",
+        "CREATE INDEX IF NOT EXISTS idx_files_unwatched_recent ON files (playCount, dateAdded DESC);",
+    ),
+    (
+        "art",
+        "idx_art_covering",
+        "CREATE INDEX IF NOT EXISTS idx_art_covering ON art (media_type, media_id, type, url);",
+    ),
+    (
+        "bookmark",
+        "idx_bookmark_resume",
+        "CREATE INDEX IF NOT EXISTS idx_bookmark_resume ON bookmark (type, timeInSeconds, idFile);",
+    ),
+    (
+        "videoversion",
+        "idx_vv_lookup",
+        "CREATE INDEX IF NOT EXISTS idx_vv_lookup ON videoversion (idMedia, media_type, itemType, idFile);",
+    ),
+]
+
+
+def apply_custom_indexes(conn: sqlite3.Connection) -> int:
+    """Create high-performance composite and covering indexes if tables exist."""
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    existing_tables = {row[0] for row in cur.fetchall()}
+    created_count = 0
+
+    for table, idx_name, idx_sql in CUSTOM_INDEXES:
+        if table in existing_tables:
+            try:
+                cur.execute(idx_sql)
+                created_count += 1
+                debug(f"Ensured index {idx_name} on table {table}")
+            except Exception as e:
+                error(f"Failed to create index {idx_name}: {e}")
+    return created_count
+
+
+def drop_custom_indexes(conn: sqlite3.Connection) -> int:
+    """Drop custom performance indexes if they exist (lossless revert)."""
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='index';")
+    existing_indexes = {row[0] for row in cur.fetchall()}
+    dropped_count = 0
+
+    for _, idx_name, _ in CUSTOM_INDEXES:
+        if idx_name in existing_indexes:
+            try:
+                cur.execute(f"DROP INDEX IF EXISTS {idx_name};")
+                dropped_count += 1
+                info(f"Dropped custom index: {idx_name}")
+            except Exception as e:
+                error(f"Failed to drop index {idx_name}: {e}")
+    return dropped_count
+
+
 def backup_file(file_path: str) -> str:
-    """Create a backup copy with .bak extension if not already existing."""
+    """Create a backup copy with .bak extension if not already existing.
+
+    If the original file does not exist, a sentinel (.not_exist) is created
+    to record that the file was absent before optimization.
+    """
     bak_path = f"{file_path}.bak"
-    if not os.path.exists(bak_path) and os.path.exists(file_path):
-        try:
-            shutil.copy2(file_path, bak_path)
-            info(f"Created backup: {bak_path}")
-        except Exception as e:
-            error(f"Failed to backup {file_path}: {e}")
+    not_exist_marker = f"{file_path}.not_exist"
+
+    if os.path.exists(file_path):
+        if not os.path.exists(bak_path):
+            try:
+                # Flush WAL data to database file before copying to ensure backup is complete
+                if file_path.endswith(".db"):
+                    try:
+                        conn = sqlite3.connect(file_path, timeout=5.0, isolation_level=None)
+                        conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
+                        conn.close()
+                    except Exception as ex:
+                        debug(f"Pre-backup checkpoint for {file_path} skipped: {ex}")
+
+                shutil.copy2(file_path, bak_path)
+                info(f"Created backup: {bak_path}")
+            except Exception as e:
+                error(f"Failed to backup {file_path}: {e}")
+        if os.path.exists(not_exist_marker):
+            try:
+                os.remove(not_exist_marker)
+            except Exception:
+                pass
+    else:
+        if not os.path.exists(bak_path) and not os.path.exists(not_exist_marker):
+            try:
+                with open(not_exist_marker, "w", encoding="utf-8") as f:
+                    f.write("")
+                info(f"Recorded pre-optimization absent state: {not_exist_marker}")
+            except Exception as e:
+                error(f"Failed to write marker {not_exist_marker}: {e}")
+
     return bak_path
 
 
@@ -108,17 +210,49 @@ class KodiOptimizerTool(BaseTool):
 
         options = [
             f"1. {get_string(30902, 'Apply All Performance Optimizations')}",
-            f"2. {get_string(30903, 'View Current Optimization Status')}",
-            f"3. {get_string(30904, 'Restore Configurations from Backup (.bak)')}",
+            f"2. {get_string(30930, 'Flush Database WALs (Fast Slimming, No Reboot)')}",
+            f"3. {get_string(30903, 'View Current Optimization Status')}",
+            f"4. {get_string(30935, 'Revert Custom Indexes (Lossless, Keeps Watch History)')}",
+            f"5. {get_string(30904, 'Restore Configurations from Backup (.bak)')}",
         ]
 
         idx = dialog_select(title, options)
         if idx == 0:
             self._action_apply_optimizations(title)
         elif idx == 1:
-            self._action_view_status(title)
+            self._action_flush_wal(title)
         elif idx == 2:
+            self._action_view_status(title)
+        elif idx == 3:
+            self._action_revert_indexes(title)
+        elif idx == 4:
             self._action_restore_backups(title)
+
+    def _action_revert_indexes(self, title: str) -> None:
+        confirm_msg = get_string(
+            30937,
+            "Are you sure you want to revert all custom indexes? Your library data will remain intact.",
+        )
+        if not dialog_yesno(title, confirm_msg):
+            return
+
+        db_count, dropped_count = self.revert_custom_indexes()
+        if dropped_count == 0:
+            show_notification(title, get_string(30939, "No custom indexes found to revert."))
+        else:
+            msg = get_string(30936, "Reverted %d custom indexes across %d databases.") % (dropped_count, db_count)
+            show_notification(title, msg)
+
+    def _action_flush_wal(self, title: str) -> None:
+        try:
+            with progress_dialog(title, get_string(30932, "Flushing database WAL logs...") % "") as dp:
+                count, freed = self.flush_wal_databases(dp)
+            freed_fmt = format_size(freed)
+            msg = get_string(30931, "Flushed %d databases successfully (%s freed).") % (count, freed_fmt)
+            show_notification(title, msg)
+        except Exception as e:
+            error(f"WAL flush failed: {e}")
+            dialog_ok(title, f"WAL flush failed: {e}")
 
     def _action_apply_optimizations(self, title: str) -> None:
         # Prompt user for thumbnail resolution preset
@@ -192,8 +326,53 @@ class KodiOptimizerTool(BaseTool):
         if dialog_yesno(title, reboot_msg):
             self._do_restart()
 
+    def flush_wal_databases(self, dp=None) -> Tuple[int, int]:
+        """Execute PRAGMA wal_checkpoint(TRUNCATE) on all media databases to flush WAL to disk."""
+        db_dir = os.path.join(self.userdata_path, "Database")
+        db_files = get_database_files(db_dir)
+
+        if not db_files:
+            info(f"No SQLite database files found in {db_dir}")
+            return 0, 0
+
+        total = len(db_files)
+        total_freed = 0
+        processed_count = 0
+
+        for i, db_path in enumerate(db_files):
+            if dp and dp.is_canceled():
+                break
+
+            db_name = os.path.basename(db_path)
+            wal_path = f"{db_path}-wal"
+            wal_size_before = os.path.getsize(wal_path) if os.path.exists(wal_path) else 0
+
+            if dp:
+                pct = int((i / max(1, total)) * 100)
+                dp.update(pct, get_string(30932, "Flushing %s WAL logs...") % db_name)
+
+            try:
+                conn = sqlite3.connect(db_path, timeout=5.0, isolation_level=None)
+                cur = conn.cursor()
+                cur.execute("PRAGMA busy_timeout = 5000;")
+                res = cur.execute("PRAGMA wal_checkpoint(TRUNCATE);").fetchone()
+                if res and res[0] == 1:
+                    cur.execute("PRAGMA wal_checkpoint(PASSIVE);")
+                cur.execute("PRAGMA optimize;")
+                conn.close()
+
+                wal_size_after = os.path.getsize(wal_path) if os.path.exists(wal_path) else 0
+                freed = max(0, wal_size_before - wal_size_after)
+                total_freed += freed
+                processed_count += 1
+                info(f"Flushed WAL for {db_name}: freed {freed} bytes (before: {wal_size_before}, after: {wal_size_after})")
+            except Exception as e:
+                error(f"Failed to flush WAL for {db_name}: {e}")
+
+        return processed_count, total_freed
+
     def optimize_databases(self, dp=None) -> int:
-        """Apply WAL mode, synchronous=NORMAL, and PRAGMA optimize to all SQLite databases."""
+        """Apply WAL mode, 4K page_size, custom covering indexes, VACUUM, and ANALYZE."""
         db_dir = os.path.join(self.userdata_path, "Database")
         db_files = get_database_files(db_dir)
 
@@ -213,20 +392,91 @@ class KodiOptimizerTool(BaseTool):
 
             if dp:
                 pct = int(10 + (i / max(1, total)) * 55)
-                dp.update(pct, get_string(30925, "Optimizing %s (WAL concurrent mode)...") % db_name)
+                dp.update(pct, get_string(30934, "Optimizing %s (Covering indexes, Vacuum & Analyze)...") % db_name)
 
             try:
                 conn = sqlite3.connect(db_path, timeout=10.0, isolation_level=None)
                 cur = conn.cursor()
+                cur.execute("PRAGMA busy_timeout = 5000;")
+
+                # Align page_size to 4096 if older database has 1024 or 2048.
+                # In SQLite, page_size cannot be altered while in WAL mode, so we
+                # ensure DELETE mode first if a page_size change is required.
+                vacuum_already_done = False
+                cur.execute("PRAGMA page_size;")
+                res_ps = cur.fetchone()
+                if res_ps and res_ps[0] != 4096:
+                    try:
+                        disk_stat = shutil.disk_usage(os.path.dirname(db_path))
+                        db_size = os.path.getsize(db_path)
+                        if disk_stat.free >= db_size * 1.5:
+                            cur.execute("PRAGMA journal_mode = DELETE;")
+                            cur.execute("PRAGMA page_size = 4096;")
+                            cur.execute("VACUUM;")
+                            vacuum_already_done = True
+                            info(f"Aligned page_size to 4096 via VACUUM for {db_name}")
+                        else:
+                            info(f"Skipped page_size realignment for {db_name}: low free space")
+                    except Exception as ex:
+                        debug(f"Page size realignment failed for {db_name}: {ex}")
+
                 cur.execute("PRAGMA journal_mode = WAL;")
                 cur.execute("PRAGMA synchronous = NORMAL;")
-                cur.execute("PRAGMA optimize;")
+
+                # Apply custom composite and covering indexes
+                apply_custom_indexes(conn)
+
+                # VACUUM safely with disk space pre-check if not already run during page_size change
+                if not vacuum_already_done:
+                    try:
+                        disk_stat = shutil.disk_usage(os.path.dirname(db_path))
+                        db_size = os.path.getsize(db_path)
+                        if disk_stat.free >= db_size * 1.5:
+                            cur.execute("VACUUM;")
+                            info(f"VACUUM completed for {db_name}")
+                        else:
+                            info(f"Skipped VACUUM for {db_name}: disk free ({disk_stat.free}) < 1.5x DB size ({db_size})")
+                    except Exception as ex:
+                        debug(f"VACUUM check/execution failed for {db_name}: {ex}")
+
+                # Update query planner cost statistics
+                cur.execute("ANALYZE;")
+
+                # Flush WAL logs
+                cur.execute("PRAGMA wal_checkpoint(TRUNCATE);")
                 conn.close()
-                info(f"Optimized {db_name}: journal_mode=WAL, synchronous=NORMAL")
+                info(f"Optimized {db_name}: WAL mode, covering indexes, VACUUM & ANALYZE completed")
             except Exception as e:
                 error(f"Failed to optimize {db_name}: {e}")
 
         return total
+
+    def revert_custom_indexes(self) -> Tuple[int, int]:
+        """Remove custom indexes across all media databases without restoring .bak files.
+
+        Returns (databases_processed, total_indexes_dropped).
+        """
+        db_dir = os.path.join(self.userdata_path, "Database")
+        db_files = get_database_files(db_dir)
+        if not db_files:
+            return 0, 0
+
+        total_dropped = 0
+        db_count = 0
+
+        for db_path in db_files:
+            try:
+                conn = sqlite3.connect(db_path, timeout=5.0, isolation_level=None)
+                dropped = drop_custom_indexes(conn)
+                conn.execute("PRAGMA optimize;")
+                conn.close()
+                if dropped > 0:
+                    total_dropped += dropped
+                    db_count += 1
+            except Exception as e:
+                error(f"Failed to revert custom indexes on {os.path.basename(db_path)}: {e}")
+
+        return db_count, total_dropped
 
     def optimize_advancedsettings(self, imageres: int = 720, fanartres: int = 1080) -> None:
         """Safely merge Mali GPU and SQLite cache optimizations into advancedsettings.xml."""
@@ -296,18 +546,44 @@ class KodiOptimizerTool(BaseTool):
         lines.append(f"[1] {get_string(30914, 'Databases (%d detected):') % len(db_files)}")
         for db_path in db_files:
             name = os.path.basename(db_path)
+            wal_path = f"{db_path}-wal"
             try:
+                db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+                wal_size = os.path.getsize(wal_path) if os.path.exists(wal_path) else 0
+
                 conn = sqlite3.connect(db_path, timeout=5.0, isolation_level=None)
                 cur = conn.cursor()
                 cur.execute("PRAGMA journal_mode;")
                 j_mode = cur.fetchone()[0]
                 cur.execute("PRAGMA synchronous;")
                 sync_val = cur.fetchone()[0]
+
+                cur.execute("SELECT name FROM sqlite_master WHERE type='index';")
+                existing_idxs = {row[0] for row in cur.fetchall()}
+                has_custom = any(idx_name in existing_idxs for _, idx_name, _ in CUSTOM_INDEXES)
+                idx_tag = f" [{get_string(30938, 'Indexes: Active')}]" if has_custom else ""
+
+                cur.execute("PRAGMA freelist_count;")
+                res_free = cur.fetchone()
+                freelist = res_free[0] if res_free else 0
+                free_str = f" | free={freelist}" if freelist > 0 else ""
+
                 conn.close()
 
                 sync_desc = {0: "OFF", 1: "NORMAL", 2: "FULL", 3: "EXTRA"}.get(sync_val, str(sync_val))
-                tag = f"[{opt_str}]" if j_mode.upper() == "WAL" else f"[{def_str}]"
-                lines.append(f"  * {name:<20}: journal={j_mode:<5} sync={sync_desc:<7} {tag}")
+                if j_mode.upper() != "WAL":
+                    tag = f"[{def_str}]"
+                elif wal_size > 16 * 1024 * 1024:
+                    tag = f"[{get_string(30933, 'WAL Backlog (Slimming Recommended)')}]"
+                else:
+                    tag = f"[{opt_str}]"
+
+                db_sz = format_size(db_size)
+                wal_sz = format_size(wal_size)
+                lines.append(
+                    f"  * {name:<20}: DB: {db_sz:<8} | WAL: {wal_sz:<8}{free_str} | "
+                    f"journal={j_mode:<5} sync={sync_desc:<7} {tag}{idx_tag}".rstrip()
+                )
             except Exception as e:
                 lines.append(f"  * {name:<20}: [Error: {e}]")
 
@@ -344,27 +620,51 @@ class KodiOptimizerTool(BaseTool):
         return "\n".join(lines)
 
     def restore_backups(self) -> int:
-        """Restore all databases and advancedsettings.xml from .bak files."""
+        """Restore all databases and advancedsettings.xml from backups."""
         db_dir = os.path.join(self.userdata_path, "Database")
         bak_files = glob.glob(os.path.join(db_dir, "*.db.bak"))
 
         as_path = os.path.join(self.userdata_path, "advancedsettings.xml")
         as_bak = f"{as_path}.bak"
+        as_not_exist = f"{as_path}.not_exist"
+
         if os.path.exists(as_bak):
             bak_files.append(as_bak)
 
-        if not bak_files:
+        if not bak_files and not os.path.exists(as_not_exist):
             return 0
 
         restored = 0
         for bak in bak_files:
             orig = bak[:-4]
             try:
+                # If restoring an SQLite database, remove any orphaned WAL/SHM files
+                # to prevent database corruption (mismatched WAL header/salt)
+                if orig.endswith(".db"):
+                    for extra in [f"{orig}-wal", f"{orig}-shm"]:
+                        if os.path.exists(extra):
+                            try:
+                                os.remove(extra)
+                                info(f"Removed orphaned WAL/SHM file: {extra}")
+                            except Exception as ex:
+                                error(f"Failed to remove orphaned file {extra}: {ex}")
+
                 shutil.copy2(bak, orig)
                 info(f"Restored: {orig} from {bak}")
                 restored += 1
             except Exception as e:
                 error(f"Failed to restore {orig}: {e}")
+
+        # Restore files that were absent prior to optimization
+        if os.path.exists(as_not_exist):
+            try:
+                if os.path.exists(as_path):
+                    os.remove(as_path)
+                    info(f"Removed {as_path} to restore pre-optimization absent state")
+                    restored += 1
+                os.remove(as_not_exist)
+            except Exception as e:
+                error(f"Failed to restore absent state for {as_path}: {e}")
 
         return restored
 

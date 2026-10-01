@@ -166,7 +166,7 @@ def show_about_info() -> None:
     """Show Addon & Hardware platform diagnostic information."""
     sys_info = get_system_info()
     addon = get_addon()
-    version = addon.getAddonInfo("version") if addon else "1.0.4"
+    version = addon.getAddonInfo("version") if addon else "1.0.6"
     dual_boot_str = get_string(30016, "Yes") if sys_info.dual_boot_supported else get_string(30017, "No")
 
     info_lines = [

@@ -17,27 +17,44 @@ if LIB_DIR not in sys.path:
 
 class MockVfsFile:
     """Mock xbmcvfs.File that reads from real file on disk if present."""
+    _url_map = {}
+
+    @classmethod
+    def register_url(cls, url, local_path):
+        cls._url_map[url] = local_path
+
+    @classmethod
+    def clear_urls(cls):
+        cls._url_map.clear()
+
     def __init__(self, path, mode="r"):
         self._path = path
         self._mode = mode
-        if isinstance(path, str) and os.path.exists(path):
-            self._file = open(path, "rb" if "b" in mode or mode == "r" else "r")
+        real_path = self._url_map.get(path, path)
+        if isinstance(real_path, str) and os.path.exists(real_path):
+            self._file = open(real_path, "rb" if "b" in mode or mode == "r" else "r")
         else:
             self._file = None
 
     def readBytes(self, size):
         if self._file:
-            return self._file.read(size)
-        return b""
+            return bytearray(self._file.read(size))
+        return bytearray()
 
     def read(self, size=-1):
         if self._file:
             return self._file.read(size)
         return b""
 
+    def seek(self, offset, whence=0):
+        if self._file:
+            return self._file.seek(offset, whence)
+        return 0
+
     def size(self):
-        if isinstance(self._path, str) and os.path.exists(self._path):
-            return os.path.getsize(self._path)
+        real_path = self._url_map.get(self._path, self._path)
+        if isinstance(real_path, str) and os.path.exists(real_path):
+            return os.path.getsize(real_path)
         return 0
 
     def close(self):
@@ -83,7 +100,8 @@ if "xbmcvfs" not in sys.modules:
     mock_xbmcvfs = MagicMock()
     mock_xbmcvfs.translatePath.side_effect = lambda p: p.replace("special://home/", "/tmp/kodi_home/").replace("special://logpath/", "/tmp/kodi_log/")
     mock_xbmcvfs.File = MockVfsFile
-    mock_xbmcvfs.exists.side_effect = lambda p: os.path.exists(p) if isinstance(p, str) else False
+    mock_xbmcvfs.exists.side_effect = lambda p: (p in mock_xbmcvfs.File._url_map) or (os.path.exists(p) if isinstance(p, str) else False)
+    mock_xbmcvfs.delete.side_effect = lambda p: (mock_xbmcvfs.File._url_map.pop(p, None) is not None) or (os.remove(p) if os.path.exists(p) else False)
     sys.modules["xbmcvfs"] = mock_xbmcvfs
 
 if "xbmcplugin" not in sys.modules:

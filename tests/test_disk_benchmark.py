@@ -45,3 +45,24 @@ def test_flush_and_evict_cache(tmp_path):
     tool._flush_and_evict_cache(dummy_file)
     assert os.path.exists(dummy_file)
     os.remove(dummy_file)
+
+
+def test_disk_benchmark_cancellation_and_edge_cases(tmp_path):
+    tool = DiskBenchmarkTool()
+    bench_file = os.path.join(str(tmp_path), "test_cancel.tmp")
+    mock_dp = MagicMock()
+    mock_dp.is_canceled.return_value = True
+
+    # Sequential write canceled immediately
+    write_speed = tool._test_sequential_write(bench_file, size_mb=2, dp=mock_dp)
+    assert write_speed >= 0
+
+    # 4k random write with 0 size
+    iops_w, mbs_w = tool._test_4k_random_write(bench_file, size_mb=0, dp=mock_dp)
+    assert iops_w == 0.0 and mbs_w == 0.0
+
+    # 4k random read with 0 size
+    iops_r, mbs_r = tool._test_4k_random_read(bench_file, size_mb=0, dp=mock_dp)
+    assert iops_r == 0.0 and mbs_r == 0.0
+
+    tool._cleanup_temp_file(bench_file)
