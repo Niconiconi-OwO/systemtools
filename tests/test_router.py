@@ -40,7 +40,35 @@ def test_menu_entries_completeness():
     assert "speedtest" in actions
     assert "kodi_optimizer" in actions
     assert "firmware_settings" in actions
+    assert "remote_adapter" in actions
+    assert "auto_reboot" in actions
     assert "about" in actions
+
+
+def test_new_tools_registered():
+    from resources.lib.tools import RemoteAdapterTool, AutoRebootTool
+    from resources.lib.tools.base_tool import ToolRegistry
+
+    tool_ra = ToolRegistry.get("remote_adapter")
+    assert tool_ra is not None
+    assert isinstance(tool_ra, RemoteAdapterTool)
+    assert tool_ra.order == 25
+
+    tool_ar = ToolRegistry.get("auto_reboot")
+    assert tool_ar is not None
+    assert isinstance(tool_ar, AutoRebootTool)
+    assert tool_ar.order == 35
+
+
+def test_show_about_info():
+    from resources.lib.router import show_about_info
+    with patch("resources.lib.router.dialog_textviewer") as mock_tv:
+        show_about_info()
+        mock_tv.assert_called_once()
+        text = mock_tv.call_args[0][1]
+        assert "Remote Control Auto-Adapter" in text
+        assert "Daily Auto Reboot" in text
+
 
 
 def test_firmware_settings_registered():

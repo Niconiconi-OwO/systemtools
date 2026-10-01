@@ -65,11 +65,22 @@
 - 支持一键切换 DHCP 自动获取或配置静态 IP / 网关 / DNS。
 - 针对 CoreELEC / LibreELEC 的 ConnMan 服务及通用 Linux `ip` 指令无缝集成。
 
-### 9. Kodi 日志管理与一键清理 (Kodi Log Cleaner)
+### 9. 遥控器自动适配工具 (Remote Control Auto-Adapter)
+- **11 款主流遥控器开箱即用适配**：包含 AM6B Plus 原厂 UR02、UR02 社区定制版、芝杜 V12 / V10 Mini、DUNE 杜恩、华为 R22、G20 Pro 语音飞鼠、MX3 2.4G 飞鼠、中国移动 2.4G / 蓝牙遥控器、腾讯极光 4 Pro 等。
+- **用户自建 Keymaps 绝对保护**：分发的按键映射均采用 `remote_adapter_` 专属前缀，严禁触碰或删除用户已有的 `gen.xml`（Keymap Editor）或手写 `keyboard.xml`。
+- **全量配置自动快照与一键无损撤销**：适配新遥控器前，自动将现存的 Keymaps、hwdb 硬件映射以及 `/flash/remote.conf` 完整快照备份至 `/storage/.remote_backup/`，支持随时一键无损还原。
+- **出厂红外码安全保护**：切换至无需 `remote.conf` 的纯蓝牙遥控器时，原始出厂红外码文件自动重命名为 `remote.conf.factory` 妥善保存，杜绝出厂红外码永久丢失。
+
+### 10. Kodi 日志管理与一键清理 (Kodi Log Cleaner)
 - 自动定位 Kodi 日志目录 (`special://logpath/`)。
 - 一键查看最近运行日志 (Tail Viewer)。
 - 一键清空 `kodi.log`，清理 `kodi.old.log` 及崩溃日志 (`kodi_crashlog*`)。
 - 支持清理前自动备份 (`.bak`)。
+
+### 11. 每日自动重启 (Daily Auto Reboot)
+- **systemd Timer 守护定时维护**：通过 Linux 原生 systemd 定时器服务每天在指定时间（支持 Kodi 原生时间拨盘输入）自动重启设备，彻底释放长时间运行的内存碎片与缓存泄漏。
+- **系统开机时长防死循环校验**：内置 `UPTIME > 600s` 严格校验，若开机不足 10 分钟自动跳过重启，彻底杜绝因开机时钟偏差或整点刚启动引发的重启死循环。
+- **一键启用与无残留彻底停用**：支持随时停用，自动卸载定时器、清除配置文件并重新载入 systemd 状态。
 
 ---
 
@@ -147,6 +158,14 @@ flake8 resources/ addon.py tests/
 ## 更新日志
 
 ### 1.0.8
+* **新增遥控器自动适配工具（Remote Control Auto-Adapter）**：
+  - 内置 11 款主流外贸与品牌遥控器（UR02、芝杜 V12/V10、DUNE、华为 R22、G20 Pro、MX3、移动蓝牙/2.4G 等）全套硬件驱动与按键映射。
+  - **用户已有 Keymaps 绝对保护**：分发 XML 自动采用安全隔离前缀，严禁触碰或删除用户原有的 `gen.xml`（Keymap Editor）或手写 `keyboard.xml`。
+  - **全量快照备份与一键撤销**：适配前全量快照备份旧配置至 `/storage/.remote_backup/`，支持一键无损还原。
+  - **出厂红外码安全保护**：切换至纯蓝牙遥控器时自动将原出厂 `/flash/remote.conf` 重命名为 `.factory` 妥善保存，杜绝出厂红外码永久丢失。
+* **新增每日定时自动重启工具（Daily Auto Reboot）**：
+  - 基于 Linux systemd 定时器实现每日无人值守定时维护重启，集成 Kodi 原生时间拨盘输入。
+  - **开机时长防死循环保护**：内置 `UPTIME > 600s` 校验，刚开机不足 10 分钟自动跳过重启，杜绝因开机时钟偏差或整点刚启动引发的重启死循环。
 * **CoreELEC 多版本切换工具（OS Switcher）重启可靠性与文件系统安全增强**：
   - **彻底解决切回系统版本后偶发不自动重启问题**：分析定位到原位覆写 250MB 系统镜像触发内存回收导致外部命令（如 `systemctl` / `reboot -f`）因 SquashFS 缺页报段错误（SIGSEGV 139）崩溃。重构为常驻内存的内核级 Magic SysRq 安全重启序列（`s` 脏页全量刷盘 -> `u` 紧急设为只读以消除 FAT32 脏标记 -> `b` 硬件直接复位），100% 绕过用户态文件系统与外部二进制，彻底杜绝切系统后盒子卡死无响应。
   - **多级硬件与系统调用兜底体系**：按优先级串联 Magic SysRq、libc `reboot(0x01234567)` 系统调用与常规命令，确保在任何异常缺页状态下均能平滑自驱复位。
