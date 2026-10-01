@@ -11,6 +11,7 @@ from .net_config import NetConfigTool
 from .net_speedtest import NetSpeedtestTool
 from .os_switcher import OsSwitcherTool
 from .ram_cleaner import RamCleanerTool
+from .auto_reboot import AutoRebootTool
 
 __all__ = [
     "BaseTool",
@@ -24,6 +25,7 @@ __all__ = [
     "DiskBenchmarkTool",
     "NetConfigTool",
     "LogCleanerTool",
+    "AutoRebootTool",
     "is_dtb_protected",
     "set_dtb_protection",
 ]
